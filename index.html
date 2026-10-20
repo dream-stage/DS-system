@@ -814,7 +814,7 @@
     <script>
         // ★★★ 【重要】GAS連携がリセットされる場合は、ここにURLを直接貼り付けてください ★★★
         // 例: const USER_GAS_URL = 'https://script.google.com/macros/s/xxxx/exec';
-        const USER_GAS_URL = 'https://script.google.com/macros/s/AKfycbwd3Eedg9OzC6rSZ8uLP9yebZPCRl4rksgO_M58pBzpfH4jTB1D_UDp21AFiXcIOWosQA/exec';
+        const USER_GAS_URL = 'https://script.google.com/macros/s/AKfycbw0VWQ9QPy7iV-bxdXRcrce0OoYnxsEK3ggJol_FD9jyMFcG-6pQCZu-4wlTe7br0B4lg/exec';
         const USER_SHEET_DIRECT_URL = '';
 
         window.addEventListener('error', function(event) {
@@ -1364,7 +1364,11 @@
                         </div>
                         <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">${s.role}</span>
                     </div>
-                    <div class="text-[10px] mt-2 text-slate-600">ID: ${s.id} | エリア: ${aHtml}</div>
+                    <div class="text-[10px] mt-2 text-slate-600">
+                        <span class="mr-2">ID: <strong class="font-mono text-slate-800">${s.id}</strong></span>
+                        ${state.currentRole === 'superadmin' ? `<span class="mr-2">PW: <strong class="font-mono text-rose-600">${escapeHtml(s.password)}</strong></span>` : ''}
+                        <div class="mt-1">エリア: ${aHtml}</div>
+                    </div>
                     ${state.currentRole!=='staff' ? `<div class="mt-2.5 pt-2.5 border-t border-slate-200 flex gap-3"><button onclick="openEditMemberModal('${s.id}')" class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"><i class="fa-solid fa-pen mr-1"></i>編集</button><button onclick="deleteMember('${s.id}')" class="text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors"><i class="fa-solid fa-trash mr-1"></i>削除</button></div>` : ''}
                 </div>`;
             }).join('');
@@ -1798,7 +1802,7 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: data })).setMimeType(ContentService.MimeType.JSON);
     }
     
-    // 【新規追加】登録メール送信処理
+    // 【新規追加】登録メール送信処理（ドリームステージ様テンプレート）
     if (action === 'sendWelcomeEmail') {
       const subject = '【DS system】登録完了のお知らせ';
       const body = 'お疲れ様です。\\n' +
@@ -1912,9 +1916,10 @@ function loadDataFromSheets() {
 }
 
 function setupTrigger() {
-  // アラートトリガーなどを設定するコード（ダミー実装）
   return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Trigger setup complete.' })).setMimeType(ContentService.MimeType.JSON);
-}`;
+}
+
+`;
             const el = document.getElementById('gas-script-template');
             if (el) el.value = code;
         }
