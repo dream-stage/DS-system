@@ -1245,11 +1245,27 @@
         }
 
         async function sendWelcomeEmail(email, id, pw, name) {
-            if (!state.gasUrl) { window.location.href = `mailto:${email}?subject=【DS system】登録完了のお知らせ&body=ID:${id} PW:${pw}`; return; }
+            const subject = encodeURIComponent('【DS system】登録完了のお知らせ');
+            const bodyText = 'お疲れ様です。\n' +
+                'DS systemを運営する株式会社ドリームステージです。\n\n' +
+                'DS systemへの登録が完了いたしました。\n' +
+                '下記アドレスよりログインし、訪店予定登録や入店報告・退店報告を行うことができます。\n\n' +
+                '▼DS systemログイン\n' +
+                'https://dream-stage.github.io/DS-system/\n' +
+                'ユーザー名：' + id + '\n' +
+                'パスワード：' + pw + '\n\n' +
+                'お問い合わせは下記連絡先まで。\n\n' +
+                '＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝\n' +
+                '株式会社ドリームステージ\n\n' +
+                'E-mail：dreamstage2010@gmail.com\n' +
+                'TEL：099-264-4354';
+            const encodedBody = encodeURIComponent(bodyText);
+
+            if (!state.gasUrl) { window.location.href = `mailto:${email}?subject=${subject}&body=${encodedBody}`; return; }
             try {
                 const res = await callGasApi('sendWelcomeEmail', { email, id, password: pw });
                 if (res.status === 'success') showToast('メール送信に成功しました', 'success'); else throw new Error();
-            } catch(e) { window.location.href = `mailto:${email}?subject=【DS system】登録完了のお知らせ&body=ID:${id} PW:${pw}`; }
+            } catch(e) { window.location.href = `mailto:${email}?subject=${subject}&body=${encodedBody}`; }
         }
 
         function openEditMemberModal(id) {
