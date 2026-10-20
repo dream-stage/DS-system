@@ -1087,7 +1087,7 @@
             if (!state.selectedDate) state.selectedDate = getSafeLocalDateStr();
             const p = state.selectedDate.split('-');
             if (p.length !== 3) return;
-            const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+            const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10)-1, parseInt(p[2], 10));
             const text = `${p[0]}/${p[1]}/${p[2]} (${['日','月','火','水','木','金','土'][d.getDay()]})`;
             document.querySelectorAll('.header-date-text').forEach(el => el.innerText = text);
             document.querySelectorAll('.header-date-picker').forEach(el => el.value = state.selectedDate);
@@ -1100,7 +1100,7 @@
 
         function navigateDate(offset) {
             const p = state.selectedDate.split('-');
-            const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+            const d = new Date(parseInt(p[0], 10), parseInt(p[1], 10)-1, parseInt(p[2], 10));
             d.setDate(d.getDate() + offset);
             state.selectedDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
             updateDateDisplays(); renderAll();
