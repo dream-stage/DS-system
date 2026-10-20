@@ -1245,11 +1245,11 @@
         }
 
         async function sendWelcomeEmail(email, id, pw, name) {
-            if (!state.gasUrl) { window.location.href = `mailto:${email}?subject=DS system登録完了&body=ID:${id} PW:${pw}`; return; }
+            if (!state.gasUrl) { window.location.href = `mailto:${email}?subject=【DS system】登録完了のお知らせ&body=ID:${id} PW:${pw}`; return; }
             try {
                 const res = await callGasApi('sendWelcomeEmail', { email, id, password: pw });
                 if (res.status === 'success') showToast('メール送信に成功しました', 'success'); else throw new Error();
-            } catch(e) { window.location.href = `mailto:${email}?subject=DS system登録完了&body=ID:${id} PW:${pw}`; }
+            } catch(e) { window.location.href = `mailto:${email}?subject=【DS system】登録完了のお知らせ&body=ID:${id} PW:${pw}`; }
         }
 
         function openEditMemberModal(id) {
@@ -1784,13 +1784,21 @@ function doPost(e) {
     
     // 【新規追加】登録メール送信処理
     if (action === 'sendWelcomeEmail') {
-      const subject = '【DS system】メンバー登録完了のお知らせ';
-      const body = 'DS systemへの登録が完了しました。\\n\\n' +
-                   '■ログイン情報\\n' +
-                   'ユーザーID: ' + payload.id + '\\n' +
-                   'パスワード: ' + payload.password + '\\n\\n' +
-                   'アプリのURLよりログインしてください。\\n' +
-                   '※このメールは自動送信されています。';
+      const subject = '【DS system】登録完了のお知らせ';
+      const body = 'お疲れ様です。\\n' +
+                   'DS systemを運営する株式会社ドリームステージです。\\n\\n' +
+                   'DS systemへの登録が完了いたしました。\\n' +
+                   '下記アドレスよりログインし、訪店予定登録や入店報告・退店報告を行うことができます。\\n\\n' +
+                   '▼DS systemログイン\\n' +
+                   'https://dream-stage.github.io/DS-system/\\n' +
+                   'ユーザー名：' + payload.id + '\\n' +
+                   'パスワード：' + payload.password + '\\n\\n' +
+                   'お問い合わせは下記連絡先まで。\\n\\n' +
+                   '＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝\\n' +
+                   '株式会社ドリームステージ\\n\\n' +
+                   'E-mail：dreamstage2010@gmail.com\\n' +
+                   'TEL：099-264-4354';
+
       MailApp.sendEmail(payload.email, subject, body);
       return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
     }
