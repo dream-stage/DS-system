@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <!-- アプリケーション名をDS systemとして定義 -->
+    <meta name="application-name" content="DS system">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="DS system">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' font-size='50' fill='white' font-family='sans-serif'>DS</text></svg>">
+    <title>DS system - 作業進捗管理システム</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#eff6ff', 100: '#dbeafe', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 800: '#1e40af', 900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        html, body {
+            height: 100%; height: 100dvh; width: 100%; margin: 0; padding: 0; overflow: hidden;
+            -webkit-overflow-scrolling: touch; overscroll-behavior-y: none;
+        }
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom);
+            padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right);
+        }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .sidebar-collapsed { width: 0 !important; min-width: 0 !important; margin-left: 0 !important; transform: translateX(-100%) !important; overflow: hidden !important; visibility: hidden; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .h-dvh { height: 100vh; height: 100dvh; }
+        .tap-btn { touch-action: manipulation; user-select: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 h-dvh w-full flex flex-col antialiased selection:bg-brand-500 selection:text-white overflow-hidden">
+
+    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 w-[90%] max-w-sm pointer-events-none"></div>
+
+    <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 overflow-y-auto">
+        <div id="login-card" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 animate-fade-in flex flex-col justify-between my-auto">
+            <div class="bg-brand-600 p-6 md:p-8 text-white text-center relative overflow-hidden shrink-0">
+                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-brand-500/30 rounded-full blur-2xl"></div>
+                <div class="inline-flex items-center justify-center w-14 h-14 md:w-16 h-16 bg-white/10 rounded-2xl mb-3 backdrop-blur-md border border-white/20">
+                    <i class="fa-solid fa-building-circle-check text-2xl md:text-3xl text-white"></i>
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">DS system</h1>
+                <p class="text-xs text-white/80 mt-1 font-medium tracking-wide">作業進捗管理システム</p>
+            </div>
+
+            <form id="login-form" autocomplete="off" onsubmit="handleLogin(event)" class="p-6 md:p-8 space-y-4 flex-1 flex flex-col justify-center">
+                <div id="login-error-msg" class="hidden p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-rose-500 shrink-0 text-sm"></i>
+                    <span id="login-error-text">ユーザーIDまたはパスワードが正しくありません</span>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">ユーザーID</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-user"></i></span>
+                        <input type="text" id="login-id" name="ds_login_id_dummy" required autocomplete="off" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm transition-all" placeholder="ユーザーIDを入力">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">パスワード</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-key"></i></span>
+                        <input type="password" id="login-pw" name="ds_login_pw_dummy" required autocomplete="new-password" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm transition-all" placeholder="パスワードを入力">
+                    </div>
+                </div>
+                <div class="pt-2">
+                    <button type="submit" id="login-submit-btn" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-bold rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center justify-center gap-2 text-base cursor-pointer">
+                        <span>ログイン</span><i class="fa-solid fa-arrow-right text-xs"></i>
+                    </button>
+                </div>
+            </form>
+            <div class="px-6 py-3 border-t border-slate-100 bg-white shrink-0 flex justify-center items-center text-slate-400 text-xs">
+                <span class="text-[11px] font-medium text-slate-500">DS system</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-shell" class="hidden flex-1 flex flex-row h-full w-full relative overflow-hidden">
+        
+        <div id="sidebar-overlay" onclick="toggleSidebar(false)" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-30 md:hidden hidden transition-opacity"></div>
+
+        <aside id="main-sidebar" class="sidebar-transition fixed md:relative inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col justify-between shrink-0 shadow-xl md:shadow-none -translate-x-full md:translate-x-0 h-full">
+            <div class="w-64 flex flex-col h-full">
+                <div class="p-4 md:p-5 flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold text-base shadow-md">
+                            <i class="fa-solid fa-building-circle-check"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white text-base leading-tight">DS system</h2>
+                            <p class="text-[10px] text-slate-400 mt-0.5 font-medium tracking-wider">作業進捗管理システム</p>
+                        </div>
+                    </div>
+                    <button type="button" onclick="toggleSidebar(false)" class="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-slate-800 transition-colors md:hidden">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <nav class="p-3 space-y-1 flex-1 overflow-y-auto">
+                    <button onclick="switchView('top')" id="nav-top" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-house w-5 text-center text-sky-400"></i><span>トップ画面</span>
+                    </button>
+                    <button onclick="switchView('progress')" id="nav-progress" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-chart-line w-5 text-center text-brand-400"></i><span>作業進捗確認</span>
+                    </button>
+                    <button onclick="switchView('schedule')" id="nav-schedule" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-calendar-plus w-5 text-center text-rose-500"></i><span>訪店予定登録</span>
+                    </button>
+                    <button onclick="switchView('checkin')" id="nav-checkin" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-door-open w-5 text-center text-sky-400"></i><span>入店報告</span>
+                    </button>
+                    <button onclick="switchView('checkout')" id="nav-checkout" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-door-closed w-5 text-center text-amber-400"></i><span>退店報告</span>
+                    </button>
+                    <button onclick="switchView('members')" id="nav-members" class="superadmin-only nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-users w-5 text-center text-emerald-400"></i><span>メンバー登録・確認</span>
+                    </button>
+                    <div id="nav-admin-divider" class="superadmin-only my-3 border-t border-slate-800"></div>
+                    <button onclick="switchView('stores')" id="nav-stores" class="superadmin-only nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-store w-5 text-center text-emerald-500"></i><span>店舗登録・確認</span>
+                    </button>
+                    <button onclick="openSheetsModal()" id="nav-sheets" class="superadmin-only nav-btn w-full flex items-center justify-between px-4 py-3 mt-1 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 text-slate-300 hover:text-white">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-file-excel w-5 text-center text-emerald-500"></i><span>DS system連携</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span id="sheets-status-label" class="text-[10px] text-slate-400">未接続</span>
+                            <span id="sheets-status-dot" class="w-2.5 h-2.5 rounded-full bg-slate-600"></span>
+                        </div>
+                    </button>
+                </nav>
+
+                <div class="p-4 border-t border-slate-800 bg-slate-950/40">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2 overflow-hidden mr-2">
+                            <i class="fa-solid fa-circle-user text-slate-400 text-base shrink-0"></i>
+                            <span id="current-user-display" class="text-xs font-medium text-slate-200 truncate">ログインユーザー</span>
+                        </div>
+                        <button type="button" onclick="logout()" class="px-2.5 py-1 bg-slate-800 hover:bg-rose-900/50 hover:text-rose-300 text-slate-400 hover:border-rose-700/60 border border-slate-700/50 text-xs rounded-lg transition-colors flex items-center gap-1.5 shrink-0">
+                            <i class="fa-solid fa-right-from-bracket text-[11px]"></i><span>ログアウト</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-slate-50 h-full overflow-hidden w-full transition-all duration-300">
+            <header class="bg-white border-b border-slate-200 shrink-0 sticky top-0 z-20 px-3 md:px-8 py-2 md:py-2.5 flex items-center justify-between gap-2 shadow-sm">
+                <div class="flex items-center gap-1.5 md:gap-3 flex-1 min-w-0">
+                    <button id="sidebar-toggle-btn" type="button" onclick="toggleSidebar()" class="p-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 rounded-xl transition-colors border border-slate-200 flex items-center justify-center group shrink-0">
+                        <i class="fa-solid fa-bars text-base md:text-lg group-hover:scale-105 transition-transform"></i>
+                    </button>
+                    <button onclick="switchView('top')" class="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-lg transition-colors flex items-center gap-1 border border-slate-300 shrink-0">
+                        <i class="fa-solid fa-house"></i><span class="hidden sm:inline">TOP</span>
+                    </button>
+                </div>
+                <div class="flex items-center gap-1.5 md:gap-3 shrink-0">
+                    <div class="flex items-center shrink-0">
+                        <span id="header-user-display" class="hidden sm:inline-block mr-2 text-xs font-medium text-slate-700 truncate max-w-[100px]"></span>
+                        <span id="header-role-badge" class="px-2.5 py-1 rounded text-xs bg-purple-100 text-purple-700 border border-purple-300 font-bold whitespace-nowrap">システム管理者</span>
+                    </div>
+                    <button type="button" onclick="logout()" class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-600 border border-rose-200 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 shrink-0 ml-1">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i><span class="hidden sm:inline">ログアウト</span>
+                    </button>
+                </div>
+            </header>
+
+            <div id="main-content-area" class="p-4 md:p-8 pb-32 md:pb-12 space-y-6 flex-1 w-full max-w-7xl mx-auto overflow-y-auto overscroll-y-contain relative">
+
+                <div id="global-error-banner" class="hidden absolute top-4 left-4 right-4 z-50 bg-rose-100 border-l-4 border-rose-500 text-rose-700 p-4 rounded shadow-md flex justify-between items-center">
+                    <div class="flex items-center gap-2 text-sm font-bold">
+                        <i class="fa-solid fa-circle-exclamation"></i>
+                        <span id="global-error-text">予期せぬエラーが発生しました。</span>
+                    </div>
+                    <button onclick="document.getElementById('global-error-banner').classList.add('hidden')" class="text-rose-500 hover:text-rose-700">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <section id="view-top" class="view-content space-y-6 w-full animate-fade-in">
+                    <div class="bg-white p-6 md:p-8 rounded-2xl border border-slate-200 shadow-sm space-y-6 w-full">
+                        <div class="border-b border-slate-100 pb-4">
+                            <h2 class="text-2xl font-bold text-slate-800">ようこそ DS systemへ</h2>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
+                            <button type="button" onclick="switchView('progress')" class="w-full p-5 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 rounded-2xl shadow-sm text-left transition-all group flex items-center justify-between">
+                                <div><span class="font-bold text-slate-800 text-lg block group-hover:text-brand-600 transition-colors">作業進捗確認</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fa-solid fa-chart-line text-xl text-brand-600"></i></div>
+                            </button>
+                            <button type="button" onclick="switchView('schedule')" class="w-full p-5 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white rounded-2xl shadow-md text-left transition-all group flex items-center justify-between">
+                                <div><span class="font-bold text-lg block">訪店予定登録</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-105 transition-transform"><i class="fa-solid fa-calendar-plus text-xl"></i></div>
+                            </button>
+                            <button type="button" onclick="switchView('checkin')" class="w-full p-5 bg-sky-500 hover:bg-sky-600 active:bg-sky-700 text-white rounded-2xl shadow-md text-left transition-all group flex items-center justify-between">
+                                <div><span class="font-bold text-lg block">入店報告</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-105 transition-transform"><i class="fa-solid fa-door-open text-xl"></i></div>
+                            </button>
+                            <button type="button" onclick="switchView('checkout')" class="w-full p-5 bg-amber-400 hover:bg-amber-500 active:bg-amber-600 text-slate-900 rounded-2xl shadow-md text-left transition-all group flex items-center justify-between">
+                                <div><span class="font-bold text-lg block">退店報告</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-black/10 backdrop-blur-sm flex items-center justify-center text-slate-900 group-hover:scale-105 transition-transform"><i class="fa-solid fa-door-closed text-xl"></i></div>
+                            </button>
+                            <button type="button" onclick="switchView('members')" class="superadmin-only w-full p-5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-2xl shadow-md text-left transition-all group flex items-center justify-between">
+                                <div><span class="font-bold text-white text-lg block">メンバー登録・確認</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-105 transition-transform"><i class="fa-solid fa-user-group text-xl"></i></div>
+                            </button>
+                            <button type="button" onclick="switchView('stores')" class="superadmin-only w-full p-5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-white rounded-2xl shadow-md text-left transition-all group flex items-center justify-between">
+                                <div><span class="font-bold text-white text-lg block">店舗登録・確認</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center text-white group-hover:scale-105 transition-transform"><i class="fa-solid fa-store text-xl"></i></div>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-progress" class="view-content hidden space-y-6 w-full animate-fade-in">
+                    <div class="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-semibold text-slate-500">全体予定数</span>
+                            <div class="flex items-baseline justify-between mt-2"><span id="kpi-total" class="text-2xl font-bold text-slate-800">0</span><span class="text-[10px] text-slate-400 font-medium">件</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                            <span class="text-xs font-semibold text-slate-500">未入店</span>
+                            <div class="flex items-baseline justify-between mt-2"><span id="kpi-unvisited" class="text-2xl font-bold text-slate-600">0</span><span class="text-[10px] text-slate-400 font-medium">件</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between border-l-4 border-l-emerald-500">
+                            <span class="text-xs font-semibold text-emerald-700">入店中</span>
+                            <div class="flex items-baseline justify-between mt-2"><span id="kpi-in-store" class="text-2xl font-bold text-emerald-600">0</span><span class="text-[10px] text-emerald-600 font-medium">件</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between border-l-4 border-l-sky-500">
+                            <span class="text-xs font-semibold text-sky-700">退店済</span>
+                            <div class="flex items-baseline justify-between mt-2"><span id="kpi-completed" class="text-2xl font-bold text-sky-600">0</span><span class="text-[10px] text-sky-600 font-medium">件</span></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between border-l-4 border-l-rose-500 col-span-2 md:col-span-1">
+                            <span class="text-xs font-semibold text-rose-700">遅延・要確認</span>
+                            <div class="flex items-baseline justify-between mt-2"><span id="kpi-delayed" class="text-2xl font-bold text-rose-600">0</span><span class="text-[10px] text-rose-600 font-medium">件</span></div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-4 md:p-6">
+                        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                            <div class="flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-brand-600 text-lg"></i><h2 class="font-bold text-slate-800 text-base">作業進捗確認</h2>
+                            </div>
+                            <div id="progress-date-nav" class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 shadow-sm">
+                                <button type="button" onclick="navigateDate(-1)" class="tap-btn px-2 md:px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white active:bg-slate-200 rounded-lg transition-all flex items-center gap-1"><i class="fa-solid fa-chevron-left text-[10px]"></i><span class="hidden sm:inline">前日</span></button>
+                                <div onclick="openDatePicker(this)" class="cursor-pointer px-2 md:px-2.5 py-1 text-xs font-bold bg-white hover:bg-slate-50 active:bg-slate-100 rounded-lg shadow-sm border border-slate-200 mx-0.5 flex items-center gap-1.5 transition-colors select-none">
+                                    <span id="header-date-text" class="header-date-text font-bold text-xs tracking-tight text-slate-900 whitespace-nowrap"></span>
+                                    <div class="relative flex items-center justify-center"><i class="fa-regular fa-calendar-days text-slate-700 hover:text-black text-sm transition-colors"></i><input type="date" id="header-date-picker" class="header-date-picker absolute inset-0 opacity-0 w-full h-full cursor-pointer" onchange="onHeaderDateChange(event)"></div>
+                                </div>
+                                <button type="button" onclick="navigateDate(1)" class="tap-btn px-2 md:px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white active:bg-slate-200 rounded-lg transition-all flex items-center gap-1"><span class="hidden sm:inline">翌日</span><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                            <div class="flex flex-wrap items-center gap-2 flex-1">
+                                <select id="progress-filter-status" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="">ステータス</option><option value="未入店">未入店</option><option value="入店中">入店中</option><option value="退店済">退店済</option>
+                                </select>
+                                <select id="progress-filter-area" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="">エリア</option>
+                                </select>
+                                <select id="progress-filter-type" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                    <option value="">種別</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option>
+                                </select>
+                                <input type="text" id="progress-search" oninput="renderProgressTable()" placeholder="店舗名・担当者検索..." class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none w-44">
+                            </div>
+                            <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 shrink-0">
+                                <i class="fa-solid fa-file-csv"></i><span>CSV出力</span>
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto w-full -mx-4 px-4 md:mx-0 md:px-0">
+                            <table class="w-full text-left border-collapse whitespace-nowrap md:whitespace-normal">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 text-[11px] font-semibold uppercase">
+                                        <th class="p-3 w-16">ステータス</th><th class="p-3 w-20">エリア</th><th class="p-3">店舗名</th><th class="p-3 w-24">種別</th><th class="p-3 w-28">担当者</th><th class="p-3 w-24">入店予定時間</th><th class="p-3 w-24">入店時間</th><th class="p-3 w-24">退店時間</th><th class="p-3 w-16 text-center">詳細</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="progress-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-schedule" class="view-content hidden space-y-6 w-full animate-fade-in">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="border-b border-slate-100 pb-4 flex flex-wrap items-center justify-between gap-3">
+                            <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-calendar-plus text-rose-500"></i><span>訪店予定登録</span></h2>
+                            <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 shadow-sm">
+                        <button type="button" onclick="navigateDate(-1)" class="tap-btn px-2 md:px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white active:bg-slate-200 rounded-lg transition-all flex items-center gap-1"><i class="fa-solid fa-chevron-left text-[10px]"></i><span class="hidden sm:inline">前日</span></button>
+                        <div onclick="openDatePicker(this)" class="cursor-pointer px-2 md:px-2.5 py-1 text-xs font-bold bg-white hover:bg-slate-50 active:bg-slate-100 rounded-lg shadow-sm border border-slate-200 mx-0.5 flex items-center gap-1.5 transition-colors select-none">
+                            <span class="header-date-text font-bold text-xs tracking-tight text-slate-900 whitespace-nowrap"></span>
+                            <div class="relative flex items-center justify-center"><i class="fa-regular fa-calendar-days text-slate-700 hover:text-black text-sm transition-colors"></i><input type="date" class="header-date-picker absolute inset-0 opacity-0 w-full h-full cursor-pointer" onchange="onHeaderDateChange(event)"></div>
+                        </div>
+                        <button type="button" onclick="navigateDate(1)" class="tap-btn px-2 md:px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white active:bg-slate-200 rounded-lg transition-all flex items-center gap-1"><span class="hidden sm:inline">翌日</span><i class="fa-solid fa-chevron-right text-[10px]"></i></button>
+                    </div>
+                </div>
+
+                <form id="admin-schedule-form" autocomplete="on" onsubmit="handleScheduleSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">エリア選択 <span class="text-rose-500">*</span></label>
+                                <select id="sched-area" onchange="updateCompanyOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="">エリアを選択</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">企業名選択 <span class="text-rose-500">*</span></label>
+                                <select id="sched-company" onchange="updateStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"><option value="">まずエリアを選択してください</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">店舗名選択 <span class="text-rose-500">*</span></label>
+                                <select id="sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"><option value="">まず企業名を選択してください</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label>
+                                <select id="sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled selected hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">担当者 <span class="text-rose-500">*</span></label>
+                                <select id="sched-staff" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間</label>
+                                <input type="text" id="sched-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                            </div>
+                            <div class="md:col-span-3">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label>
+                                <textarea id="sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                            </div>
+                            <div class="md:col-span-3 pt-2">
+                                <button type="submit" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i><span>訪店予定を登録する</span></button>
+                            </div>
+                        </form>
+
+                        <div id="member-schedule-container" class="hidden space-y-4">
+                            <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl">
+                                <p class="text-xs text-rose-800 font-medium leading-relaxed">担当店舗が表示されています。<br>前日の19:00までに担当店舗に「入店予定時間」を入力して登録してください。</p>
+                            </div>
+                            <div id="member-schedule-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <section id="view-checkin" class="view-content hidden space-y-6 w-full animate-fade-in">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                <div class="border-b border-slate-100 pb-4"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-door-open text-sky-500"></i><span>入店報告</span></h2></div>
+                <form id="checkin-form-container" autocomplete="on" onsubmit="handleCheckinSubmit(event)" class="space-y-4 max-w-xl">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">店舗名を選択 <span class="text-rose-500">*</span></label>
+                                <select id="checkin-schedule-id" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="">選択してください</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label>
+                                <textarea id="checkin-memo" rows="3" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                            </div>
+                            <p class="text-[11px] text-slate-500 font-bold leading-relaxed"><span class="text-rose-500">※入店時位置情報を取得します。</span><br>GeminiアプリやLINE等のアプリ内ブラウザではGPSがブロックされる場合があります。<br>その際は<span class="text-rose-500">SafariやChromeブラウザ</span>で開き直してください。<br><span class="mt-1 block">※SafariやChromeブラウザで開き直して「拒否されています」と出る場合は、<span class="text-rose-500">スマホ本体の「設定」からSafari/Chromeの位置情報を「許可」</span>に変更してください。</span></p>
+                            <div class="pt-2">
+                                <button type="submit" id="checkin-submit-btn" class="w-full py-3 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2 tap-btn"><i class="fa-solid fa-check"></i><span>入店を報告する</span></button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="view-checkout" class="view-content hidden space-y-6 w-full animate-fade-in">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                <div class="border-b border-slate-100 pb-4"><h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-door-closed text-amber-500"></i><span>退店報告</span></h2></div>
+                <form autocomplete="on" onsubmit="handleCheckoutSubmit(event)" class="space-y-4 max-w-xl">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">入店中の店舗名を選択 <span class="text-rose-500">*</span></label>
+                                <select id="checkout-schedule-id" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="">選択してください</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label>
+                                <textarea id="checkout-memo" rows="4" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                            </div>
+                            <button type="submit" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane"></i><span>退店を報告する</span></button>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="view-members" class="view-content hidden space-y-6 w-full animate-fade-in">
+                    <div id="members-list-panel" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="border-b border-slate-100 pb-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-users text-emerald-500 text-xl"></i><h2 class="text-xl font-bold text-slate-800">メンバー登録・確認</h2></div>
+                            <button onclick="showMemberForm(true)" class="superadmin-only px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-2"><i class="fa-solid fa-user-plus"></i><span>新規メンバー登録</span></button>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <div class="relative flex-1 max-w-xs">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+                                <input type="text" id="member-search" oninput="renderMembers()" placeholder="氏名・フリガナ・ID・エリア検索..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                            <span class="text-xs text-slate-500 font-medium">登録数: <strong id="member-count" class="text-slate-800">0</strong> 名</span>
+                        </div>
+                        <div id="members-list-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    </div>
+
+                    <div id="members-form-panel" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-user-plus text-emerald-600 text-xl"></i><h2 class="text-xl font-bold text-slate-800">新規メンバー登録</h2></div>
+                </div>
+                <form id="new-member-form" autocomplete="on" onsubmit="handleAddMember(event)" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">氏名 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="member-name" autocomplete="name" required placeholder="氏名を入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><p class="mt-1 text-[10px] text-rose-500 hidden peer-invalid:block">氏名を入力してください。</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">フリガナ（全角カタカナ）</label>
+                        <input type="text" id="member-furigana" autocomplete="off" pattern="^[ァ-ヶー]+$" placeholder="例: ヤマダタロウ" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><p class="mt-1 text-[10px] text-rose-500 hidden peer-invalid:block">全角カタカナで入力してください。</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">メンバー種別 <span class="text-rose-500">*</span></label>
+                        <select id="member-role" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><option value="管理者">管理者</option><option value="メンバー">メンバー</option></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ユーザーID (半角英数4桁) <span class="text-rose-500">*</span></label>
+                        <input type="text" id="member-id" required autocomplete="username" pattern="[A-Za-z0-9]{4}" maxlength="4" placeholder="例: 0001" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><p class="mt-1 text-[10px] text-rose-500 hidden peer-invalid:block">半角英数字4桁で入力してください。</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">パスワード <span class="text-rose-500">*</span></label>
+                        <input type="password" id="member-password" required autocomplete="new-password" minlength="4" placeholder="パスワードを入力 (4文字以上)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><p class="mt-1 text-[10px] text-rose-500 hidden peer-invalid:block">4文字以上で入力してください。</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">電話番号 <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="member-phone" required autocomplete="tel" pattern="[0-9\-]+" placeholder="例: 090-0000-0000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><p class="mt-1 text-[10px] text-rose-500 hidden peer-invalid:block">有効な電話番号を入力してください。</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">担当エリア (複数選択可) <span class="text-rose-500">*</span></label>
+                        <div id="member-area-container" class="flex flex-wrap gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl min-h-[42px]"></div>
+                        <p id="member-area-error" class="mt-1 text-[10px] text-rose-500 hidden">最低1つのエリアを選択してください。</p>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">メールアドレス <span class="text-rose-500">*</span></label>
+                        <input type="email" id="member-email" required autocomplete="email" placeholder="例: member@example.com" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none focus:invalid:ring-rose-500 focus:invalid:border-rose-500 invalid:border-rose-300 transition-colors peer"><p class="mt-1 text-[10px] text-rose-500 hidden peer-invalid:block">有効なメールアドレスを入力してください。</p>
+                    </div>
+                    <div id="member-alert-container" class="sm:col-span-2 mt-1">
+                                <label class="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold select-none bg-rose-50/50 p-2.5 rounded-xl border border-rose-100 hover:bg-rose-50 transition-colors">
+                                    <input type="checkbox" id="member-receive-alert" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-rose-300">
+                                    <span class="text-xs"><i class="fa-solid fa-bell text-rose-600 mr-1"></i>入店予定時間未登録と未入店のアラートメールを受信する</span>
+                                </label>
+                            </div>
+                            <div class="sm:col-span-2 mt-1">
+                                <label class="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold select-none bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition-colors">
+                                    <input type="checkbox" id="member-send-email" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300">
+                                    <span class="text-xs"><i class="fa-solid fa-envelope text-emerald-600 mr-1"></i>登録メールを送信する</span>
+                                </label>
+                            </div>
+                            <div class="sm:col-span-2 flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+                                <button type="button" onclick="showMemberForm(false)" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs rounded-xl transition-colors">戻る</button>
+                                <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5"><i class="fa-solid fa-user-plus"></i><span>新規メンバー登録</span></button>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+
+                <section id="view-stores" class="view-content hidden space-y-6 w-full animate-fade-in">
+                    <div id="stores-list-panel" class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="border-b border-slate-100 pb-4 flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-2"><i class="fa-solid fa-store text-emerald-500 text-xl"></i><h2 class="text-xl font-bold text-slate-800">店舗登録・確認</h2></div>
+                            <button onclick="showStoreForm(true)" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-2"><i class="fa-solid fa-plus"></i><span>新規店舗登録</span></button>
+                        </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+                            <div class="relative flex-1 max-w-xs">
+                                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-magnifying-glass text-xs"></i></span>
+                                <input type="text" id="store-search" oninput="renderStores()" placeholder="エリア・企業名・店舗名で検索..." class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            </div>
+                        </div>
+                        <div id="stores-list-container" class="space-y-4"></div>
+                    </div>
+
+                    <div id="stores-form-panel" class="hidden bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                        <div class="border-b border-slate-100 pb-4">
+                    <div class="flex items-center gap-2"><i class="fa-solid fa-store text-emerald-600 text-xl"></i><h2 class="text-xl font-bold text-slate-800">新規店舗登録</h2></div>
+                </div>
+                <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 space-y-4">
+                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><i class="fa-solid fa-store text-emerald-600"></i><span>新規店舗情報の入力</span></h3>
+                    <form autocomplete="on" onsubmit="handleAddStore(event)" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">エリア <span class="text-rose-500">*</span></label>
+                                    <select id="store-form-area-select" onchange="onStoreFormAreaChange()" required class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                                    <input type="text" id="store-form-area-custom" placeholder="例: 北海道" class="hidden mt-2 w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">企業名 <span class="text-[10px] text-slate-400 font-normal ml-1">(任意)</span></label>
+                                    <select id="store-form-company-select" onchange="onStoreFormCompanyChange()" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                                    <input type="text" id="store-form-company-custom" placeholder="例: イオン" class="hidden mt-2 w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">店舗名 <span class="text-[10px] text-slate-400 font-normal ml-1">(任意)</span></label>
+                                    <input type="text" id="store-form-name" placeholder="例: 福岡店" class="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                                </div>
+                                <div class="flex items-center justify-end gap-3 sm:col-span-2 md:col-span-3 pt-4 border-t border-slate-200">
+                                    <button type="button" onclick="showStoreForm(false)" class="px-5 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs rounded-xl transition-colors flex items-center gap-1"><span>戻る</span></button>
+                                    <button type="submit" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-md transition-colors flex items-center gap-1.5"><i class="fa-solid fa-check"></i><span>新規店舗登録</span></button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- スプレッドシート連携モーダル -->
+    <div id="sheets-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-3xl w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[95dvh]">
+            <div class="bg-slate-900 text-white p-5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-600 flex items-center justify-center text-white text-xl font-bold shadow-md"><i class="fa-solid fa-file-excel"></i></div>
+                    <div>
+                        <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                            <span>スプレッドシート「DS system」連携</span><span id="modal-conn-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-600 text-white font-normal">連携設定済</span>
+                        </h3>
+                        <p class="text-[11px] text-slate-300">Google Apps Script (GAS) を通じた双方向同期</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeSheetsModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="p-6 space-y-6 text-xs overflow-y-auto bg-slate-50">
+                <div class="p-4 bg-amber-50/80 border border-amber-200 rounded-xl text-amber-900 space-y-2">
+                    <div class="font-bold flex items-center gap-1.5 text-sm text-amber-800"><i class="fa-solid fa-circle-exclamation text-amber-600"></i><span>うまく連携できない時の最重要チェック！</span></div>
+                    <p class="text-xs text-amber-800 leading-relaxed">GASをウェブアプリとして公開する際、<strong>「アクセスできるユーザー」を必ず『全員 (Anyone)』</strong>に設定してください（『自分のみ』になっていると通信が遮断されます）。</p>
+                    <div class="mt-2 pt-2 border-t border-amber-200/50">
+                        <p class="text-xs text-amber-800 leading-relaxed font-bold mb-1">【メール送信エラーが出る場合】</p>
+                        <p class="text-xs text-amber-800 leading-relaxed">「MailApp.sendEmailを呼び出す権限がありません」と出る場合は、GASエディタ上部の「▷ 実行」ボタンを押し、表示される「アクセスを承認」画面でご自身のアカウントを選択 →「詳細」→「（安全ではないページ）に移動」→「許可」を行ってください。</p>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h4 class="font-bold text-emerald-800 flex items-center gap-2 text-sm"><i class="fa-solid fa-list-ol text-emerald-600"></i><span>連携手順（5つのステップ）</span></h4>
+                    
+                    <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-1.5">
+                        <span class="font-bold text-slate-800 text-sm block">① Googleスプレッドシートを新規作成</span>
+                        <p class="text-slate-600">Googleドライブで新しいスプレッドシートを作成し、タイトルを「DS system」等にします。</p>
+                    </div>
+                    
+                    <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-2 relative">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-slate-800 text-sm">② GASエディタを開いて下記コードを貼り付け</span>
+                            <button type="button" onclick="copyGasScriptCode()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1 shadow-sm"><i class="fa-regular fa-copy"></i><span>コードをコピー</span></button>
+                        </div>
+                        <p class="text-slate-600">スプレッドシートのメニュー上部<strong>「拡張機能」→「Apps Script」</strong>を開き、元からあるコードを全消去して下のコードを貼り付けます。</p>
+                        <textarea id="gas-script-template" readonly rows="8" class="w-full mt-2 p-3 bg-slate-100/50 border border-slate-200 rounded-lg font-mono text-[11px] text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-y"></textarea>
+                    </div>
+
+                    <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
+                        <span class="font-bold text-slate-800 text-sm block">③ ウェブアプリとしてデプロイ</span>
+                        <p class="text-slate-600">右上の青い「デプロイ」→「新しいデプロイ」をクリック。</p>
+                        <ul class="list-disc list-inside space-y-1 text-slate-700 pl-2">
+                            <li>種類の選択（歯車アイコン）：<strong>「ウェブアプリ」</strong></li>
+                            <li>次のユーザーとして実行：<strong>「自分」</strong></li>
+                            <li>アクセスできるユーザー：<strong class="text-rose-600 bg-rose-50 px-1 rounded">「全員」※最重要</strong></li>
+                        </ul>
+                        <p class="text-[10px] text-slate-500 mt-1">※初回デプロイ時「アクセスを承認」画面が出た場合は、ご自身のアカウントを選択し「詳細」→「安全ではないページに移動」をクリックして許可してください。</p>
+                    </div>
+
+                    <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
+                        <span class="font-bold text-slate-800 text-sm block">④ 発行された「ウェブアプリURL」を下に貼り付け</span>
+                        <p class="text-slate-600">デプロイ完了後に表示される「ウェブアプリ URL（末尾が /exec のもの）」をコピーし、下の「GAS Web App URL」欄に貼り付けて「URL保存」を押します。</p>
+                    </div>
+                    
+                    <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-1.5">
+                        <span class="font-bold text-slate-800 text-sm block">⑤ 「接続テスト」または「現行データを送信」をクリック</span>
+                        <p class="text-slate-600">下のボタンを押すとスプレッドシートに自動的にシート（訪店予定_進捗、店舗マスタ、メンバーマスタ）が生成され、同期が完了します！</p>
+                    </div>
+
+                    <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
+                        <div class="flex items-center justify-between"><span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">⑥ 遅延アラートの有効化 (任意)</span></div>
+                        <p class="text-slate-600">入店予定時刻を過ぎても未入店の場合、担当者および設定した管理者に自動でアラートメールを送信します。<br>有効にするには、連携設定完了後に下のボタンを押してください。</p>
+                        <button type="button" onclick="setupGasAlertTrigger()" class="w-full mt-2 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm"><i class="fa-solid fa-bell"></i> アラートメールを自動送信する設定をONにする</button>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-white border border-slate-200 rounded-xl shadow-sm space-y-4">
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="font-bold text-slate-800 text-sm flex items-center gap-1.5"><i class="fa-solid fa-link text-emerald-600"></i><span>GAS Web App URL</span> <span class="text-xs font-normal text-slate-500">(末尾が /exec のURL)</span></label>
+                            <span id="last-sync-time" class="text-[11px] text-slate-500 font-mono">最終同期: 未実行</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="url" id="gas-url-input" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <button onclick="saveGasSettings()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors whitespace-nowrap shadow-sm cursor-pointer">URL保存</button>
+                        </div>
+                    </div>
+                    <div class="pt-3 border-t border-slate-100">
+                        <label class="block font-bold text-slate-800 text-sm mb-1.5">スプレッドシートURL <span class="text-xs font-normal text-slate-500">(閲覧・直接開く用)</span></label>
+                        <div class="flex gap-2">
+                            <input type="url" id="sheet-direct-url-input" placeholder="https://docs.google.com/spreadsheets/d/.../edit" class="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <button onclick="saveSheetDirectUrl()" class="px-4 py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors whitespace-nowrap cursor-pointer">保存</button>
+                            <button onclick="openSpreadsheetDirect()" id="open-sheet-btn" class="px-4 py-2.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-semibold rounded-xl transition-colors flex items-center gap-1.5 whitespace-nowrap cursor-pointer"><i class="fa-solid fa-arrow-up-right-from-square"></i><span>シートを開く</span></button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-100">
+                        <button id="btn-sync-send" onclick="syncAllToGas()" class="py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-cloud-arrow-up text-base"></i><span>現行データを送信</span></button>
+                        <button id="btn-sync-fetch" onclick="fetchFromGas()" class="py-3 px-4 bg-slate-700 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-cloud-arrow-down text-base"></i><span>最新データを取得</span></button>
+                        <button id="btn-sync-test" onclick="testGasConnection()" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-satellite-dish text-base"></i><span>接続テスト</span></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 border-t border-slate-100 flex items-center justify-between shrink-0">
+                <div class="text-[11px] text-slate-500 font-medium">※ 訪店予定登録・入退店報告時は自動でバックグラウンド送信されます</div>
+                <button type="button" onclick="closeSheetsModal()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-sm rounded-xl shadow-sm transition-colors cursor-pointer">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- メンバー編集モーダル -->
+    <div id="edit-member-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[90dvh]">
+            <div class="bg-slate-900 text-white p-4 md:p-5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-user-pen"></i></div>
+                    <h3 class="font-bold text-base text-white">担当者情報の編集</h3>
+                </div>
+                <button type="button" onclick="closeEditMemberModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form autocomplete="on" onsubmit="handleUpdateMember(event)" class="p-5 md:p-6 space-y-4 text-xs overflow-y-auto flex-1">
+                <input type="hidden" id="edit-member-orig-id">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">氏名 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="edit-member-name" autocomplete="name" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">フリガナ（全角カタカナ）</label>
+                        <input type="text" id="edit-member-furigana" autocomplete="off" pattern="^[ァ-ヶー]+$" placeholder="例: ヤマダタロウ" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">メンバー種別 <span class="text-rose-500">*</span></label>
+                        <select id="edit-member-role" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">ユーザーID (半角英数4桁) <span class="text-rose-500">*</span></label>
+                        <input type="text" id="edit-member-id" required autocomplete="username" pattern="[A-Za-z0-9]{4}" maxlength="4" placeholder="例: 0001" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">パスワード <span class="text-rose-500">*</span></label>
+                        <input type="password" id="edit-member-password" required autocomplete="new-password" minlength="4" placeholder="パスワードを入力 (4文字以上)" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">電話番号 <span class="text-rose-500">*</span></label>
+                        <input type="tel" id="edit-member-phone" required autocomplete="tel" pattern="[0-9\-]+" placeholder="例: 090-0000-0000" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">担当エリア (複数選択可) <span class="text-rose-500">*</span></label>
+                        <div id="edit-member-area-container" class="flex flex-wrap gap-2 p-2.5 bg-slate-50 border border-slate-200 rounded-xl min-h-[42px]"></div>
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">メールアドレス <span class="text-rose-500">*</span></label>
+                        <input type="email" id="edit-member-email" required autocomplete="email" placeholder="例: member@example.com" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div id="edit-member-alert-container" class="sm:col-span-2 mt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold select-none bg-rose-50/50 p-2.5 rounded-xl border border-rose-100 hover:bg-rose-50 transition-colors">
+                            <input type="checkbox" id="edit-member-receive-alert" class="w-4 h-4 rounded text-rose-600 focus:ring-rose-500 border-rose-300">
+                            <span class="text-xs"><i class="fa-solid fa-bell text-rose-600 mr-1"></i>入店予定時間未登録と未入店のアラートメールを受信する</span>
+                        </label>
+                    </div>
+                    <div class="sm:col-span-2 mt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-slate-700 font-semibold select-none bg-emerald-50/50 p-2.5 rounded-xl border border-emerald-100 hover:bg-emerald-50 transition-colors">
+                            <input type="checkbox" id="edit-member-send-email" class="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-emerald-300">
+                            <span class="text-xs"><i class="fa-solid fa-envelope text-emerald-600 mr-1"></i>登録メールを再送信する</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeEditMemberModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-check"></i><span>変更を保存</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 店舗編集モーダル -->
+    <div id="edit-store-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[90dvh]">
+            <div class="bg-slate-900 text-white p-5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-pen-to-square"></i></div>
+                    <h3 class="font-bold text-base text-white">店舗情報の編集</h3>
+                </div>
+                <button type="button" onclick="closeEditStoreModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form autocomplete="on" onsubmit="handleUpdateStore(event)" class="p-6 space-y-4 text-xs overflow-y-auto flex-1">
+                <input type="hidden" id="edit-store-orig-area"><input type="hidden" id="edit-store-orig-company"><input type="hidden" id="edit-store-orig-name">
+                <div><label class="block text-xs font-semibold text-slate-600 mb-1">エリア <span class="text-rose-500">*</span></label><input type="text" id="edit-store-area" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></div>
+                <div><label class="block text-xs font-semibold text-slate-600 mb-1">企業名 <span class="text-rose-500">*</span></label><input type="text" id="edit-store-company" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></div>
+                <div><label class="block text-xs font-semibold text-slate-600 mb-1">店舗名 <span class="text-rose-500">*</span></label><input type="text" id="edit-store-name" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500 focus:outline-none"></div>
+                <div class="flex justify-end gap-2 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeEditStoreModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-1.5"><i class="fa-solid fa-check"></i><span>変更を保存</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 詳細モーダル -->
+    <div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[90dvh]">
+            <div class="bg-slate-900 text-white p-5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-circle-info"></i></div>
+                    <div><h3 class="font-bold text-base text-white">訪問・作業詳細</h3><p id="modal-date-badge" class="text-[11px] text-slate-400">日付: -</p></div>
+                </div>
+                <button type="button" onclick="closeDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors" title="閉じる"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="p-6 space-y-5 overflow-y-auto flex-1 text-xs">
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80 flex items-center justify-between"><span class="text-[10px] text-slate-400 font-medium block">ステータス</span><span id="modal-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">ステータス</span></div>
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"><span class="text-[10px] text-slate-400 font-medium block">エリア</span><span id="modal-area" class="font-bold text-slate-800 text-sm mt-0.5 block">-</span></div>
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"><span class="text-[10px] text-slate-400 font-semibold block uppercase">店舗名</span><span id="modal-store-fullname" class="text-base font-bold text-slate-800 mt-0.5 block">-</span></div>
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"><span class="text-[10px] text-slate-400 font-medium block">種別</span><span id="modal-task-type" class="font-semibold text-slate-700 text-sm mt-0.5 block">-</span></div>
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"><span class="text-[10px] text-slate-400 font-medium block">担当者</span><span id="modal-staff" class="font-semibold text-slate-700 text-sm mt-0.5 block">-</span></div>
+                <div class="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
+                    <h4 class="font-bold text-slate-800 text-xs border-b border-slate-100 pb-2 flex items-center gap-1.5"><i class="fa-regular fa-clock text-brand-600"></i><span>タイムライン</span></h4>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="p-2 rounded-lg bg-slate-50"><span class="text-[10px] text-slate-400 block">入店予定時間</span><span id="modal-target-time" class="font-bold text-slate-800 text-xs">-</span></div>
+                        <div class="p-2 rounded-lg bg-emerald-50"><span class="text-[10px] text-emerald-600 block">入店時間</span><span id="modal-checkin-time" class="font-bold text-emerald-700 text-xs">-</span></div>
+                        <div class="p-2 rounded-lg bg-sky-50"><span class="text-[10px] text-sky-600 block">退店時間</span><span id="modal-checkout-time" class="font-bold text-sky-700 text-xs">-</span></div>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-[11px] font-bold text-slate-700 mb-1 flex items-center gap-1.5"><i class="fa-solid fa-comment-dots text-sky-500"></i><span>連絡事項</span></label>
+                        <div id="modal-memo" class="p-3 bg-slate-50 border border-slate-200 rounded-xl text-slate-700 text-xs min-h-[40px] whitespace-pre-wrap">なし</div>
+                    </div>
+                    <div id="modal-map-container" class="hidden pt-2 border-t border-slate-100">
+                        <label class="block text-[11px] font-bold text-slate-700 mb-2 flex items-center gap-1.5"><i class="fa-solid fa-map-location-dot text-emerald-500"></i><span>入店時位置情報</span></label>
+                        <a id="modal-map-link" href="#" target="_blank" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl text-xs font-bold border border-emerald-200 transition-colors shadow-sm">
+                            <i class="fa-solid fa-map"></i><span>Googleマップで確認する</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 p-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button type="button" onclick="openEditScheduleModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-pen-to-square"></i><span>編集</span></button>
+                <button type="button" id="detail-modal-delete-btn" onclick="deleteCurrentDetailSchedule()" class="superadmin-only px-3.5 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-600 border border-rose-200 font-semibold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="削除"><i class="fa-solid fa-trash-can"></i><span>削除</span></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 予定・進捗編集モーダル -->
+    <div id="edit-schedule-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[90dvh]">
+            <div class="bg-slate-900 text-white p-4 md:p-5 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-pen-to-square"></i></div><h3 class="font-bold text-base text-white">予定・進捗情報の編集</h3></div>
+                <button type="button" onclick="closeEditScheduleModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form autocomplete="on" onsubmit="handleUpdateSchedule(event)" class="p-5 md:p-6 text-xs overflow-y-auto flex-1">
+                <input type="hidden" id="edit-sched-id">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="sm:col-span-1"><label class="block text-xs font-semibold text-slate-600 mb-1">訪店日付 <span class="text-rose-500">*</span></label><input type="date" id="edit-sched-date" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></div>
+                    <div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-600 mb-1">ステータス <span class="text-rose-500">*</span></label><select id="edit-sched-status" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold text-slate-700"><option value="未入店">未入店</option><option value="入店中">入店中</option><option value="退店済">退店済</option></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">エリア選択 <span class="text-rose-500">*</span></label><select id="edit-sched-area" onchange="updateEditCompanyOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">企業名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-company" onchange="updateEditStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">店舗名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label><select id="edit-sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">担当者 <span class="text-rose-500">*</span></label><select id="edit-sched-staff" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
+                    <div id="edit-sched-target-time-container">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間 <span class="text-rose-500">*</span></label>
+                        <input type="text" id="edit-sched-target-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
+                    </div>
+                    <div class="sm:col-span-3"><label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label><textarea id="edit-sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea></div>
+                </div>
+                <div class="flex justify-end gap-2 pt-4 mt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeEditScheduleModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-check"></i><span>変更を保存</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- アプリ内カスタム確認モーダル -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden border border-slate-100 my-auto p-5 space-y-4">
+            <div class="flex items-center gap-3 text-slate-800">
+                <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div><h3 id="confirm-modal-title" class="font-bold text-sm text-slate-900">確認</h3><p id="confirm-modal-message" class="text-xs text-slate-600 mt-1">実行してもよろしいですか？</p></div>
+            </div>
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button type="button" id="confirm-modal-cancel" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-colors">キャンセル</button>
+                <button type="button" id="confirm-modal-ok" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold rounded-xl transition-colors shadow-sm flex items-center gap-1.5"><i class="fa-solid fa-check"></i><span>削除</span></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ★★★ 【重要】GAS連携がリセットされる場合は、ここにURLを直接貼り付けてください ★★★
+        // 例: const USER_GAS_URL = 'https://script.google.com/macros/s/xxxx/exec';
+        const USER_GAS_URL = 'https://script.google.com/macros/s/AKfycbw0VWQ9QPy7iV-bxdXRcrce0OoYnxsEK3ggJol_FD9jyMFcG-6pQCZu-4wlTe7br0B4lg/exec';
+        const USER_SHEET_DIRECT_URL = '';
+
+        window.addEventListener('error', function(event) {
+            // 無視する無害なエラー（ブラウザ拡張機能やResizeObserver起因など）
+            if (event.message && (event.message.includes('ResizeObserver') || event.message.includes('Script error'))) return;
+            console.error("Global Error Caught: ", event.error);
+            const banner = document.getElementById('global-error-banner');
+            if (banner) {
+                document.getElementById('global-error-text').innerText = 'エラー: ' + (event.message || '予期せぬエラーが発生しました');
+                banner.classList.remove('hidden');
+            }
+        });
+
+        const safeStorage = {
+            getItem(key) {
+                try { const val = localStorage.getItem(key); if (val !== null) return val; } catch(e) {}
+                try { const match = document.cookie.match(new RegExp('(^|;\\s*)' + key + '=([^;]+)')); return match ? decodeURIComponent(match[2]) : null; } catch(e) { return null; }
+            },
+            setItem(key, val) {
+                try { localStorage.setItem(key, val); } catch(e) {}
+                try { document.cookie = `${key}=${encodeURIComponent(val)}; max-age=31536000; path=/; SameSite=Lax`; } catch(e) {}
+            },
+            removeItem(key) {
+                try { localStorage.removeItem(key); } catch(e) {}
+                try { document.cookie = `${key}=; max-age=0; path=/; SameSite=Lax`; } catch(e) {}
+            }
+        };
+
+        function getSafeLocalDateStr() {
+            const d = new Date();
+            const offset = d.getTimezoneOffset() * 60000;
+            const localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 10);
+            return localISOTime;
+        }
+
+        const state = {
+            selectedDate: getSafeLocalDateStr(), currentUser: null, currentUserId: null, currentRole: 'superadmin', originalRole: 'superadmin', activeDetailId: null,
+            // ★ここに発行したGAS WebアプリのURLを直接設定しておくと、リロードしても消えません
+            gasUrl: USER_GAS_URL,
+            sheetDirectUrl: USER_SHEET_DIRECT_URL,
+            areas: ['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄'],
+            stores: {},
+            staffs: [
+                { id: '0001', name: 'システム管理者', furigana: 'システムカンリシャ', role: 'システム管理者', area: ['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄'], phone: '090-0000-0001', email: 'admin@example.com', password: 'admin', receiveAlert: false }
+            ],
+            schedules: []
+        };
+
+        function normalizeInput(str) { return str ? String(str).replace(/[！-～]/g, s => String.fromCharCode(s.charCodeAt(0) - 0xFEE0)).replace(/　/g, ' ').trim() : ''; }
+        function escapeHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;') : ''; }
+        function getMemberAreaList(area) { return area ? (Array.isArray(area) ? area : String(area).split(',').map(a => a.trim()).filter(Boolean)) : []; }
+
+        const PREFECTURE_ORDER = [
+            '北海道', '青森', '青森県', '岩手', '岩手県', '宮城', '宮城県', '秋田', '秋田県', '山形', '山形県', '福島', '福島県',
+            '茨城', '茨城県', '栃木', '栃木県', '群馬', '群馬県', '埼玉', '埼玉県', '千葉', '千葉県', '東京', '東京都', '神奈川', '神奈川県',
+            '新潟', '新潟県', '富山', '富山県', '石川', '石川県', '福井', '福井県', '山梨', '山梨県', '長野', '長野県', '岐阜', '岐阜県',
+            '静岡', '静岡県', '愛知', '愛知県', '三重', '三重県', '滋賀', '滋賀県', '京都', '京都府', '大阪', '大阪府', '兵庫', '兵庫県',
+            '奈良', '奈良県', '和歌山', '和歌山県', '鳥取', '鳥取県', '島根', '島根県', '岡山', '岡山県', '広島', '広島県', '山口', '山口県',
+            '徳島', '徳島県', '香川', '香川県', '愛媛', '愛媛県', '高知', '高知県',
+            '福岡', '福岡県', '佐賀', '佐賀県', '長崎', '長崎県', '熊本', '熊本県', '大分', '大分県', '宮崎', '宮崎県', '鹿児島', '鹿児島県', '沖縄', '沖縄県'
+        ];
+
+        function getAreaSortIndex(area) {
+            const idx = PREFECTURE_ORDER.indexOf(area);
+            return idx !== -1 ? idx : 999;
+        }
+
+        function sortAreas(areas) {
+            if (!areas || !Array.isArray(areas)) return [];
+            return [...areas].sort((a, b) => {
+                const iA = getAreaSortIndex(a);
+                const iB = getAreaSortIndex(b);
+                if (iA !== iB) return iA - iB;
+                return String(a).localeCompare(String(b), 'ja');
+            });
+        }
+        
+        function getMergedAreaOptions(curr = []) {
+            const base = ['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄'];
+            if (state.areas) state.areas.forEach(a => { if (!base.includes(a) && a !== '未設定エリア') base.push(a); });
+            if (curr && Array.isArray(curr)) curr.forEach(a => { if (!base.includes(a) && a !== '未設定エリア') base.push(a); });
+            return sortAreas(base).filter(a => a !== '未設定エリア');
+        }
+
+        function updateRoleSelectOptions(id, currRole, selRole, isNew) {
+            const sel = document.getElementById(id);
+            if (!sel) return;
+            let opts = '';
+            if (currRole === 'superadmin') opts += `<option value="システム管理者" ${selRole === 'システム管理者' ? 'selected' : ''}>システム管理者</option>`;
+            opts += `<option value="管理者" ${selRole === '管理者' ? 'selected' : ''}>管理者</option><option value="メンバー" ${selRole === 'メンバー' ? 'selected' : ''}>メンバー</option>`;
+            sel.innerHTML = opts;
+        }
+
+        function handleLogin(e) {
+            if (e) e.preventDefault();
+            let id = normalizeInput(document.getElementById('login-id').value);
+            if (id.length > 0 && id.length < 4) id = id.padStart(4, '0');
+            const pw = normalizeInput(document.getElementById('login-pw').value);
+            let staff = state.staffs.find(s => (s.id.padStart(4,'0') === id && normalizeInput(s.password) === pw));
+            
+            if (!staff) {
+                const defs = [{ id: '0001', name: 'システム管理者', furigana: 'システムカンリシャ', role: 'システム管理者', area: state.areas, phone: '', email: '', password: 'admin', receiveAlert: false }];
+                const f = defs.find(s => s.id === id && s.password === pw);
+                if (f) {
+                    staff = f;
+                    const idx = state.staffs.findIndex(s => s.id === staff.id);
+                    if (idx !== -1) state.staffs[idx] = staff; else state.staffs.push(staff);
+                    setTimeout(silentSyncAllToGas, 1000);
+                }
+            }
+
+            if (!staff) {
+                document.getElementById('login-error-msg').classList.remove('hidden');
+                return;
+            }
+            document.getElementById('login-error-msg').classList.add('hidden');
+            state.currentUser = staff.name; state.currentUserId = staff.id;
+            state.originalRole = staff.role === 'システム管理者' ? 'superadmin' : (staff.role === '管理者' ? 'admin' : 'staff');
+            state.currentRole = state.originalRole;
+            
+            // ログアウト状態を完全にリセット
+            try { sessionStorage.removeItem('ds_logged_out'); } catch(err) {}
+
+            updateRoleUI();
+            state.selectedDate = getSafeLocalDateStr();
+            updateDateDisplays();
+            
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-shell').classList.remove('hidden');
+            
+            updateGasDot();
+            if (state.gasUrl) { fetchFromGas(true); }
+            
+            renderAll();
+            switchView('top');
+            
+            if (e && e.type === 'submit') showToast('ログインしました');
+        }
+
+        function toggleSidebar(force) {
+            const sidebar = document.getElementById('main-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            if (window.innerWidth < 768) {
+                const show = force !== undefined ? force : sidebar.classList.contains('-translate-x-full');
+                if (show) { sidebar.classList.remove('-translate-x-full'); overlay.classList.remove('hidden'); }
+                else { sidebar.classList.add('-translate-x-full'); overlay.classList.add('hidden'); }
+            } else {
+                const collapse = force !== undefined ? !force : !sidebar.classList.contains('sidebar-collapsed');
+                if (collapse) sidebar.classList.add('sidebar-collapsed');
+                else sidebar.classList.remove('sidebar-collapsed');
+            }
+        }
+
+        function updateRoleUI() {
+            const isSuper = state.currentRole === 'superadmin';
+            document.querySelectorAll('.superadmin-only').forEach(el => {
+                if (isSuper) { el.classList.remove('hidden'); el.style.display = ''; } else { el.classList.add('hidden'); el.style.display = 'none'; }
+            });
+            document.getElementById('current-user-display').innerText = state.currentUser || 'ゲスト';
+            document.getElementById('header-user-display').innerText = state.currentUser || 'ゲスト';
+            
+            let rName = 'メンバー', bClass = 'bg-emerald-100 text-emerald-700 border-emerald-300';
+            if (isSuper) { rName = 'システム管理者'; bClass = 'bg-purple-100 text-purple-700 border-purple-300'; }
+            else if (state.currentRole === 'admin') { rName = 'エリア管理者'; bClass = 'bg-brand-100 text-brand-700 border-brand-300'; }
+            
+            const badge = document.getElementById('header-role-badge');
+            if (badge) { badge.innerText = rName; badge.className = `px-2.5 py-1 rounded text-xs font-bold whitespace-nowrap border ${bClass}`; }
+
+            if (state.originalRole === 'superadmin') {
+                document.getElementById('sidebar-toggle-btn').classList.remove('hidden');
+                document.getElementById('main-sidebar').classList.remove('hidden');
+            } else {
+                document.getElementById('sidebar-toggle-btn').classList.add('hidden');
+                document.getElementById('main-sidebar').classList.add('hidden');
+            }
+
+            const adminForm = document.getElementById('admin-schedule-form');
+            const memCont = document.getElementById('member-schedule-container');
+            if (state.currentRole === 'staff' || state.currentRole === 'admin') {
+                if (adminForm) { adminForm.classList.add('hidden'); adminForm.style.display = 'none'; }
+                if (memCont) { memCont.classList.remove('hidden'); memCont.style.display = ''; }
+            } else {
+                if (adminForm) { adminForm.classList.remove('hidden'); adminForm.style.display = ''; }
+                if (memCont) { memCont.classList.add('hidden'); memCont.style.display = 'none'; }
+            }
+            updateGasDot();
+        }
+
+        function switchView(viewName) {
+            if ((viewName === 'stores' || viewName === 'members' || viewName === 'sheets') && state.currentRole !== 'superadmin') { showToast('権限がありません'); return; }
+            if (viewName === 'members') showMemberForm(false); else if (viewName === 'stores') showStoreForm(false);
+
+            document.querySelectorAll('.view-content').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${viewName}`).classList.remove('hidden');
+
+            document.querySelectorAll('.nav-btn').forEach(b => { b.classList.remove('bg-slate-800', 'text-white'); b.classList.add('text-slate-300'); });
+            const navBtn = document.getElementById(`nav-${viewName}`);
+            if (navBtn) {
+                navBtn.classList.add('bg-slate-800', 'text-white');
+                navBtn.classList.remove('text-slate-300');
+            }
+
+            if (viewName === 'schedule') updateSchedStaffDisplay();
+            if (window.innerWidth < 768) toggleSidebar(false);
+            renderAll();
+        }
+
+        function renderProgressTable() {
+            const tbody = document.getElementById('progress-table-body');
+            if (!tbody) return;
+
+            const isStaff = state.currentRole === 'staff';
+            const sQ = (document.getElementById('progress-search')?.value || '').toLowerCase();
+            const fA = document.getElementById('progress-filter-area')?.value || '';
+            const fS = document.getElementById('progress-filter-status')?.value || '';
+            const fT = document.getElementById('progress-filter-type')?.value || '';
+
+            const areaSel = document.getElementById('progress-filter-area');
+            if (areaSel) {
+                const sorted = sortAreas(state.areas).filter(a => a !== '未設定エリア');
+                areaSel.innerHTML = '<option value="">エリア</option>' + sorted.map(a => `<option value="${a}" ${a===fA?'selected':''}>${a}</option>`).join('');
+            }
+
+            let list = state.schedules.filter(s => s.date === state.selectedDate);
+            if (isStaff && state.currentUser) list = list.filter(s => s.staff === state.currentUser);
+
+            list.sort((a, b) => {
+                const sP = { '未入店': 1, '入店中': 2, '退店済': 3 };
+                if (sP[a.status] !== sP[b.status]) return (sP[a.status]||99) - (sP[b.status]||99);
+                if (!a.targetTime && b.targetTime) return -1;
+                if (a.targetTime && !b.targetTime) return 1;
+                return (a.targetTime||'').localeCompare(b.targetTime||'');
+            });
+
+            let [tot, unv, ins, cmp, del] = [list.length, 0, 0, 0, 0];
+            const currM = new Date().getHours() * 60 + new Date().getMinutes();
+            list.forEach(s => {
+                if (s.status === '未入店') { unv++; if (s.targetTime) { const p=s.targetTime.split(':'); if (currM > (p[0]*60+Number(p[1])+15)) del++; } }
+                else if (s.status === '入店中') ins++;
+                else if (s.status === '退店済') cmp++;
+            });
+
+            document.getElementById('kpi-total').innerText = tot;
+            document.getElementById('kpi-unvisited').innerText = unv;
+            document.getElementById('kpi-in-store').innerText = ins;
+            document.getElementById('kpi-completed').innerText = cmp;
+            document.getElementById('kpi-delayed').innerText = del;
+
+            if (fA) list = list.filter(s => s.area === fA);
+            if (fS) list = list.filter(s => s.status === fS);
+            if (fT) list = list.filter(s => s.taskType === fT);
+            if (sQ) list = list.filter(s => ((s.company||'')+s.store).toLowerCase().includes(sQ) || (s.staff||'').toLowerCase().includes(sQ) || (s.area||'').toLowerCase().includes(sQ));
+
+            if (list.length === 0) { tbody.innerHTML = `<tr><td colspan="9" class="p-8 text-center text-slate-400 text-xs">データがありません</td></tr>`; return; }
+
+            tbody.innerHTML = list.map(s => {
+                let badg = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">未入店</span>';
+                if (s.status === '入店中') badg = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 animate-pulse">入店中</span>';
+                else if (s.status === '退店済') badg = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-300">退店済</span>';
+                return `
+                <tr class="hover:bg-slate-50 border-b border-slate-100">
+                    <td class="p-3">${badg}</td><td class="p-3">${escapeHtml(s.area)}</td><td class="p-3 font-bold">${escapeHtml((s.company||'')+s.store)}</td>
+                    <td class="p-3">${escapeHtml(s.taskType||'-')}</td><td class="p-3">${escapeHtml(s.staff)}</td>
+                    <td class="p-3 font-mono">${s.targetTime||'-'}</td><td class="p-3 font-mono text-emerald-600">${s.checkinTime||'-'}</td>
+                    <td class="p-3 font-mono text-sky-600">${s.checkoutTime||'-'}</td>
+                    <td class="p-3 text-center"><button onclick="openDetailModal('${s.id}')" class="px-2.5 py-1 bg-brand-50 text-brand-600 rounded-lg text-[11px] border border-brand-200">詳細</button></td>
+                </tr>`;
+            }).join('');
+        }
+
+        function updateDateDisplays() {
+            if (!state.selectedDate) state.selectedDate = getSafeLocalDateStr();
+            const p = state.selectedDate.split('-');
+            if (p.length !== 3) return;
+            const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+            const text = `${p[0]}/${p[1]}/${p[2]} (${['日','月','火','水','木','金','土'][d.getDay()]})`;
+            document.querySelectorAll('.header-date-text').forEach(el => el.innerText = text);
+            document.querySelectorAll('.header-date-picker').forEach(el => el.value = state.selectedDate);
+        }
+
+        function openDatePicker(el) {
+            const p = el.querySelector('input[type="date"]') || document.getElementById('header-date-picker');
+            if (p) { try { p.showPicker(); } catch(e) { p.focus(); p.click(); } }
+        }
+
+        function navigateDate(offset) {
+            const p = state.selectedDate.split('-');
+            const d = new Date(parseInt(p[0]), parseInt(p[1])-1, parseInt(p[2]));
+            d.setDate(d.getDate() + offset);
+            state.selectedDate = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            updateDateDisplays(); renderAll();
+        }
+        function onHeaderDateChange(e) { if(e.target.value) { state.selectedDate = e.target.value; updateDateDisplays(); renderAll(); } }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            updateDateDisplays();
+            initGasScriptTemplate();
+            
+            // ソースコードに直接書かれたURLを優先し、なければストレージから読み込む
+            state.gasUrl = state.gasUrl || safeStorage.getItem('ds_gas_url') || '';
+            state.sheetDirectUrl = state.sheetDirectUrl || safeStorage.getItem('ds_sheet_direct_url') || '';
+            
+            updateGasDot();
+
+            const g = document.getElementById('gas-url-input'); if(g && state.gasUrl) g.value = state.gasUrl;
+            
+            // ログイン情報の自動入力を防ぐため、初期化時に空にする (遅延実行でブラウザの補完を上書き)
+            setTimeout(() => {
+                document.getElementById('login-id').value = '';
+                document.getElementById('login-pw').value = '';
+            }, 100);
+            safeStorage.removeItem('ds_saved_user'); // 古い保存データも削除
+        });
+
+        async function fetchRobustLocation(forceRefresh = false) {
+            if (window.isSecureContext === false) throw { code: 99 };
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) reject({code: -1});
+                // forceRefreshがfalseの場合は、過去30秒(30000ms)のキャッシュを利用して取得を高速化
+                navigator.geolocation.getCurrentPosition(
+                    pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, source: 'GPS'}),
+                    err => reject(err), { enableHighAccuracy: true, timeout: 7000, maximumAge: forceRefresh ? 0 : 30000 }
+                );
+            });
+        }
+
+        async function handleCheckinSubmit(e) {
+            e.preventDefault();
+            const sId = document.getElementById('checkin-schedule-id').value;
+            const sched = state.schedules.find(s => s.id === sId);
+            if (!sched) { showToast('店舗を選択してください'); return; }
+
+            const btn = document.getElementById('checkin-submit-btn');
+            const orig = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>GPS取得中...</span>';
+
+            try {
+                const loc = await fetchRobustLocation(false);
+                executeCheckin(sched, document.getElementById('checkin-memo').value, loc.lat, loc.lng);
+                showToast('📍 位置情報を記録しました');
+            } catch (err) {
+                executeCheckin(sched, document.getElementById('checkin-memo').value, null, null);
+                showToast('⚠️ 位置情報なしで完了', 'error');
+            } finally {
+                btn.disabled = false; btn.innerHTML = orig;
+            }
+        }
+
+        function executeCheckin(sched, memo, lat, lng) {
+            const now = new Date();
+            sched.status = '入店中'; sched.checkinTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            sched.lat = lat; sched.lng = lng;
+            if (memo) sched.memo = (sched.memo ? sched.memo + '\n' : '') + '[入店] ' + memo;
+            showToast('入店報告を完了しました');
+            silentSyncAllToGas();
+            document.getElementById('checkin-form-container').reset();
+            switchView('progress');
+        }
+
+        function handleCheckoutSubmit(e) {
+            e.preventDefault();
+            const sched = state.schedules.find(s => s.id === document.getElementById('checkout-schedule-id').value);
+            if (!sched) return;
+            const now = new Date();
+            sched.status = '退店済'; sched.checkoutTime = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const memo = document.getElementById('checkout-memo').value;
+            if (memo) sched.memo = (sched.memo ? sched.memo + '\n' : '') + '[退店] ' + memo;
+            showToast('退店報告を完了しました');
+            silentSyncAllToGas();
+            e.target.reset(); switchView('progress');
+        }
+
+        function logout() {
+            state.currentUser = null; state.currentUserId = null; state.originalRole = null;
+            try { sessionStorage.setItem('ds_logged_out', 'true'); } catch(e) {}
+            document.getElementById('app-shell').classList.add('hidden');
+            document.getElementById('login-view').classList.remove('hidden');
+            
+            // ログアウト時は確実に入力欄を空にする
+            document.getElementById('login-id').value = '';
+            document.getElementById('login-pw').value = '';
+        }
+
+        function handleScheduleSubmit(e) {
+            e.preventDefault();
+            const a = document.getElementById('sched-area').value, c = document.getElementById('sched-company').value, s = document.getElementById('sched-store').value;
+            if (!a || !c || !s) { showToast('入力が必要です'); return; }
+            state.schedules.push({
+                id: String(Date.now()), date: state.selectedDate, area: a, company: c, store: s,
+                staff: document.getElementById('sched-staff').value, taskType: document.getElementById('sched-task-type').value,
+                targetTime: document.getElementById('sched-time').value, status: '未入店', memo: document.getElementById('sched-memo').value
+            });
+            showToast('訪店予定を登録しました');
+            silentSyncAllToGas();
+            e.target.reset(); switchView('progress');
+        }
+
+        function showMemberForm(show) {
+            const lp = document.getElementById('members-list-panel'), fp = document.getElementById('members-form-panel');
+            if (show) {
+                document.getElementById('new-member-form').reset();
+                const alertCb = document.getElementById('member-receive-alert'); if (alertCb) alertCb.checked = false;
+                const sendCb = document.getElementById('member-send-email'); if (sendCb) sendCb.checked = false;
+                
+                const ac = document.getElementById('member-area-container');
+                if (ac) ac.innerHTML = getMergedAreaOptions().map(a => `<label class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium cursor-pointer"><input type="checkbox" name="new-member-area" value="${escapeHtml(a)}"> ${escapeHtml(a)}</label>`).join('');
+                updateRoleSelectOptions('member-role', state.currentRole, state.currentRole === 'superadmin' ? 'システム管理者' : 'メンバー', true);
+                lp.classList.add('hidden'); fp.classList.remove('hidden');
+            } else { fp.classList.add('hidden'); lp.classList.remove('hidden'); renderMembers(); }
+        }
+
+        function handleAddMember(e) {
+            e.preventDefault();
+            const areas = Array.from(document.querySelectorAll('input[name="new-member-area"]:checked')).map(cb => cb.value);
+            if (areas.length === 0) { showToast('エリアを選択してください', 'error'); return; }
+            
+            const id = normalizeInput(document.getElementById('member-id').value);
+            if (state.staffs.some(s => s.id === id)) { showToast('ID重複', 'error'); return; }
+
+            const nm = {
+                id, name: document.getElementById('member-name').value, 
+                furigana: document.getElementById('member-furigana').value,
+                password: normalizeInput(document.getElementById('member-password').value),
+                role: document.getElementById('member-role').value, phone: document.getElementById('member-phone').value,
+                email: document.getElementById('member-email').value, area: areas, receiveAlert: document.getElementById('member-receive-alert')?.checked
+            };
+            state.staffs.push(nm);
+            
+            const sendEmail = document.getElementById('member-send-email')?.checked;
+            if (nm.email && sendEmail) sendWelcomeEmail(nm.email, nm.id, nm.password, nm.name);
+            
+            silentSyncAllToGas();
+            e.target.reset(); showMemberForm(false); renderAll();
+        }
+
+        async function sendWelcomeEmail(email, id, pw, name) {
+            if (!state.gasUrl) { window.location.href = `mailto:${email}?subject=DS system登録完了&body=ID:${id} PW:${pw}`; return; }
+            try {
+                const res = await callGasApi('sendWelcomeEmail', { email, id, password: pw });
+                if (res.status === 'success') showToast('メール送信成功'); else throw new Error();
+            } catch(e) { window.location.href = `mailto:${email}?subject=DS system登録完了&body=ID:${id} PW:${pw}`; }
+        }
+
+        function openEditMemberModal(id) {
+            const staff = state.staffs.find(s => s.id === String(id).padStart(4,'0'));
+            if (!staff) return;
+            document.getElementById('edit-member-orig-id').value = staff.id;
+            document.getElementById('edit-member-id').value = staff.id;
+            document.getElementById('edit-member-name').value = staff.name;
+            document.getElementById('edit-member-furigana').value = staff.furigana || '';
+            document.getElementById('edit-member-password').value = staff.password;
+            updateRoleSelectOptions('edit-member-role', state.currentRole, staff.role, false);
+            
+            const ac = document.getElementById('edit-member-area-container');
+            const cA = getMemberAreaList(staff.area);
+            ac.innerHTML = getMergedAreaOptions(cA).map(a => `<label class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-medium cursor-pointer"><input type="checkbox" name="edit-member-area" value="${escapeHtml(a)}" ${cA.includes(a)?'checked':''}> ${escapeHtml(a)}</label>`).join('');
+            
+            document.getElementById('edit-member-phone').value = staff.phone;
+            document.getElementById('edit-member-email').value = staff.email;
+            document.getElementById('edit-member-receive-alert').checked = staff.receiveAlert === true;
+            document.getElementById('edit-member-send-email').checked = false; // モーダルを開くたびにオフにする
+            document.getElementById('edit-member-modal').classList.remove('hidden');
+        }
+        function closeEditMemberModal() { document.getElementById('edit-member-modal').classList.add('hidden'); }
+
+        function handleUpdateMember(e) {
+            e.preventDefault();
+            const staff = state.staffs.find(s => s.id === document.getElementById('edit-member-orig-id').value);
+            const areas = Array.from(document.querySelectorAll('input[name="edit-member-area"]:checked')).map(c => c.value);
+            if (areas.length === 0) return;
+            
+            staff.id = normalizeInput(document.getElementById('edit-member-id').value);
+            staff.name = document.getElementById('edit-member-name').value;
+            staff.furigana = document.getElementById('edit-member-furigana').value;
+            staff.password = normalizeInput(document.getElementById('edit-member-password').value);
+            staff.role = document.getElementById('edit-member-role').value;
+            staff.area = areas;
+            staff.phone = document.getElementById('edit-member-phone').value;
+            staff.email = document.getElementById('edit-member-email').value;
+            staff.receiveAlert = document.getElementById('edit-member-receive-alert').checked;
+
+            if (document.getElementById('edit-member-send-email').checked) sendWelcomeEmail(staff.email, staff.id, staff.password, staff.name);
+            silentSyncAllToGas(); closeEditMemberModal(); renderAll();
+        }
+
+        function deleteMember(id) {
+            showConfirmDialog('削除', '削除しますか？', () => {
+                state.staffs = state.staffs.filter(s => s.id !== id);
+                silentSyncAllToGas(); renderAll();
+            });
+        }
+
+        function renderMembers() {
+            const cnt = document.getElementById('members-list-container');
+            if (!cnt) return;
+            const q = (document.getElementById('member-search')?.value||'').toLowerCase();
+            let lst = state.staffs.filter(s => s.name.toLowerCase().includes(q) || (s.furigana||'').toLowerCase().includes(q) || s.id.includes(q) || (s.area||[]).join(',').includes(q));
+            if (state.currentRole !== 'superadmin') lst = lst.filter(s => s.role !== 'システム管理者');
+            
+            // 権限の順位
+            const roleOrder = { 'システム管理者': 1, '管理者': 2, 'メンバー': 3 };
+            
+            lst.sort((a, b) => {
+                // 1. 権限順
+                const roleDiff = (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+                if (roleDiff !== 0) return roleDiff;
+                
+                // フリガナ（未設定時は名前にフォールバック）を準備
+                const fA = (a.furigana || a.name || '').toString();
+                const fB = (b.furigana || b.name || '').toString();
+
+                if (a.role === 'システム管理者') {
+                    // システム管理者はエリアを考慮せず、フリガナ(50音順)
+                    return fA.localeCompare(fB, 'ja');
+                } else {
+                    // 2. 担当エリアの最初の都道府県順
+                    const getFirstAreaIndex = (areas) => {
+                        const validAreas = getMemberAreaList(areas).filter(area => area !== '未設定エリア');
+                        let minIdx = 999;
+                        validAreas.forEach(area => {
+                            const idx = getAreaSortIndex(area);
+                            if (idx < minIdx) minIdx = idx;
+                        });
+                        return minIdx;
+                    };
+                    
+                    const areaDiff = getFirstAreaIndex(a.area) - getFirstAreaIndex(b.area);
+                    if (areaDiff !== 0) return areaDiff; 
+                    
+                    // 3. 同じ都道府県ならフリガナ(50音順)
+                    return fA.localeCompare(fB, 'ja');
+                }
+            });
+            
+            cnt.innerHTML = lst.map(s => {
+                const sortedAreas = sortAreas(getMemberAreaList(s.area).filter(a => a !== '未設定エリア'));
+                const aHtml = sortedAreas.map(a => `<span class="px-1.5 py-0.5 bg-rose-50 border rounded text-[10px] mr-1">${a}</span>`).join('');
+                return `<div class="p-4 bg-slate-50 border rounded-xl relative group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-[9px] font-medium text-slate-400 mb-0.5 leading-none">${escapeHtml(s.furigana || '')}</div>
+                            <span class="font-bold text-sm">${escapeHtml(s.name)}</span>
+                        </div>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-600">${s.role}</span>
+                    </div>
+                    <div class="text-[10px] mt-2 text-slate-600">ID: ${s.id} | エリア: ${aHtml}</div>
+                    ${state.currentRole!=='staff' ? `<div class="mt-2.5 pt-2.5 border-t border-slate-200 flex gap-3"><button onclick="openEditMemberModal('${s.id}')" class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"><i class="fa-solid fa-pen mr-1"></i>編集</button><button onclick="deleteMember('${s.id}')" class="text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors"><i class="fa-solid fa-trash mr-1"></i>削除</button></div>` : ''}
+                </div>`;
+            }).join('');
+            document.getElementById('member-count').innerText = lst.length;
+        }
+
+        function showStoreForm(show) {
+            if (show) {
+                const s = document.getElementById('store-form-area-select');
+                s.innerHTML = '<option value="">エリア</option>' + getMergedAreaOptions().map(a => `<option value="${a}">${a}</option>`).join('') + '<option value="__NEW__">＋新規エリア</option>';
+                document.getElementById('stores-list-panel').classList.add('hidden');
+                document.getElementById('stores-form-panel').classList.remove('hidden');
+            } else {
+                document.getElementById('stores-form-panel').classList.add('hidden');
+                document.getElementById('stores-list-panel').classList.remove('hidden'); renderStores();
+            }
+        }
+
+        function onStoreFormAreaChange() {
+            const v = document.getElementById('store-form-area-select').value;
+            const c = document.getElementById('store-form-area-custom');
+            if (v === '__NEW__') c.classList.remove('hidden'); else c.classList.add('hidden');
+            
+            const cs = document.getElementById('store-form-company-select');
+            cs.innerHTML = '<option value="">企業名</option>' + (state.stores[v] ? Object.keys(state.stores[v]).sort().map(x => `<option value="${x}">${x}</option>`).join('') : '') + '<option value="__NEW__">＋新規企業名</option>';
+        }
+        function onStoreFormCompanyChange() {
+            const v = document.getElementById('store-form-company-select').value;
+            const c = document.getElementById('store-form-company-custom');
+            if (v === '__NEW__') c.classList.remove('hidden'); else c.classList.add('hidden');
+        }
+
+        function handleAddStore(e) {
+            e.preventDefault();
+            const aVal = document.getElementById('store-form-area-select').value;
+            const a = aVal === '__NEW__' ? document.getElementById('store-form-area-custom').value : aVal;
+            
+            const cVal = document.getElementById('store-form-company-select').value;
+            const c = cVal === '__NEW__' ? document.getElementById('store-form-company-custom').value : cVal;
+            
+            const s = document.getElementById('store-form-name').value;
+            
+            if (!a) { showToast('エリアを入力してください', 'error'); return; }
+
+            if (!state.areas.includes(a)) state.areas.push(a);
+            
+            if (c) {
+                if (!state.stores[a]) state.stores[a] = {};
+                if (!state.stores[a][c]) state.stores[a][c] = [];
+                if (s && !state.stores[a][c].includes(s)) state.stores[a][c].push(s);
+            } else if (s && !c) {
+                showToast('店舗名を登録する場合は、企業名も入力してください', 'error');
+                return;
+            }
+            
+            silentSyncAllToGas(); showStoreForm(false); renderAll();
+            showToast('登録が完了しました', 'success');
+        }
+
+        function openEditStoreModal(a, c, s) {
+            document.getElementById('edit-store-orig-area').value = a; document.getElementById('edit-store-area').value = a;
+            document.getElementById('edit-store-orig-company').value = c; document.getElementById('edit-store-company').value = c;
+            document.getElementById('edit-store-orig-name').value = s; document.getElementById('edit-store-name').value = s;
+            document.getElementById('edit-store-modal').classList.remove('hidden');
+        }
+        function closeEditStoreModal() { document.getElementById('edit-store-modal').classList.add('hidden'); }
+
+        function handleUpdateStore(e) {
+            e.preventDefault();
+            const oa = document.getElementById('edit-store-orig-area').value, oc = document.getElementById('edit-store-orig-company').value, os = document.getElementById('edit-store-orig-name').value;
+            const na = document.getElementById('edit-store-area').value, nc = document.getElementById('edit-store-company').value, ns = document.getElementById('edit-store-name').value;
+            
+            state.stores[oa][oc] = state.stores[oa][oc].filter(x => x !== os);
+            if (state.stores[oa][oc].length === 0) delete state.stores[oa][oc];
+            if (Object.keys(state.stores[oa]).length === 0) delete state.stores[oa];
+
+            if (!state.areas.includes(na)) state.areas.push(na);
+            if (!state.stores[na]) state.stores[na] = {};
+            if (!state.stores[na][nc]) state.stores[na][nc] = [];
+            state.stores[na][nc].push(ns);
+            
+            silentSyncAllToGas(); closeEditStoreModal(); renderAll();
+        }
+        function deleteStore(a, c, s) {
+            showConfirmDialog('削除', '削除しますか？', () => {
+                if (s === '') {
+                    delete state.stores[a][c];
+                } else {
+                    state.stores[a][c] = state.stores[a][c].filter(x => x !== s);
+                    if (state.stores[a][c].length === 0) delete state.stores[a][c];
+                }
+                if (state.stores[a] && Object.keys(state.stores[a]).length === 0) delete state.stores[a];
+                silentSyncAllToGas(); renderAll();
+            });
+        }
+
+        function renderStores() {
+            const cnt = document.getElementById('stores-list-container');
+            const q = (document.getElementById('store-search')?.value||'').toLowerCase();
+            let h = '';
+            
+            const displayAreas = getMergedAreaOptions();
+            displayAreas.forEach(a => {
+                let sH = '';
+                if (state.stores[a]) {
+                    Object.keys(state.stores[a]).sort().forEach(c => {
+                        const sts = state.stores[a][c].filter(s => !q || (a+c+s).toLowerCase().includes(q)).sort();
+                        if (sts.length > 0) {
+                            sH += `<div class="bg-white p-3 rounded-xl border mb-2"><div class="font-bold text-sm mb-2">${escapeHtml(c)}</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
+                            sts.forEach(s => {
+                                sH += `<div class="flex items-center justify-between bg-slate-50 p-2 rounded"><span class="text-xs truncate mr-2">${escapeHtml(s)}</span><div class="shrink-0"><button onclick="openEditStoreModal('${a}','${c}','${s}')" class="text-brand-600 px-1.5 py-1 hover:bg-brand-50 rounded"><i class="fa-solid fa-pen text-[10px]"></i></button><button onclick="deleteStore('${a}','${c}','${s}')" class="text-rose-600 px-1.5 py-1 hover:bg-rose-50 rounded"><i class="fa-solid fa-trash text-[10px]"></i></button></div></div>`;
+                            });
+                            sH += `</div></div>`;
+                        } else if (state.stores[a][c].length === 0 && (!q || c.toLowerCase().includes(q))) {
+                            sH += `<div class="bg-white p-3 rounded-xl border mb-2 flex items-center justify-between"><div class="font-bold text-sm text-slate-500">${escapeHtml(c)} <span class="text-[10px] font-normal ml-1">(店舗なし)</span></div><button onclick="deleteStore('${a}','${c}','')" class="text-rose-600 px-2 py-1 hover:bg-rose-50 rounded text-[10px]"><i class="fa-solid fa-trash mr-1"></i>削除</button></div>`;
+                        }
+                    });
+                }
+                
+                if (sH || (!q && displayAreas.includes(a))) {
+                     const isCustomArea = !['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄'].includes(a);
+                     const canDeleteArea = !sH && isCustomArea; // 店舗も企業も登録されていない新規追加エリアのみ削除可能
+                     
+                     h += `<details class="mb-3 border rounded-xl bg-white shadow-sm group" ${q?'open':''}><summary class="font-bold p-3 cursor-pointer text-emerald-800 bg-emerald-50/50 rounded-t-xl group-open:border-b border-slate-100 flex items-center justify-between select-none">
+                     <span class="flex items-center gap-2">${escapeHtml(a)} <i class="fa-solid fa-chevron-down text-emerald-600/50 text-xs transition-transform group-open:rotate-180"></i></span>
+                     ${canDeleteArea ? `<button type="button" onclick="event.preventDefault(); deleteArea('${a}')" class="text-rose-600 px-2 py-1 hover:bg-rose-100 rounded text-[10px]"><i class="fa-solid fa-trash mr-1"></i>エリア削除</button>` : ''}
+                     </summary><div class="p-3 bg-white rounded-b-xl">${sH || '<p class="text-xs text-slate-400 text-center py-4">登録企業・店舗はありません</p>'}</div></details>`;
+                }
+            });
+            cnt.innerHTML = h || '<div class="text-center py-8 text-xs text-slate-400">見つかりません</div>';
+        }
+
+        function deleteArea(a) {
+            showConfirmDialog('削除', `エリア「${a}」を削除しますか？`, () => {
+                state.areas = state.areas.filter(area => area !== a);
+                if (state.stores[a]) delete state.stores[a];
+                silentSyncAllToGas(); renderAll();
+                showToast(`「${a}」を削除しました`, 'success');
+            });
+        }
+
+        function updateCompanyOptions() {
+            const a = document.getElementById('sched-area')?.value, cSel = document.getElementById('sched-company'), sSel = document.getElementById('sched-store');
+            if (a && state.stores[a]) {
+                cSel.disabled = false; cSel.innerHTML = '<option value="">企業名を選択</option>' + Object.keys(state.stores[a]).sort().map(c => `<option value="${c}">${c}</option>`).join('');
+            } else { cSel.disabled = true; cSel.innerHTML = '<option value="">まずエリアを選択</option>'; }
+            sSel.disabled = true; sSel.innerHTML = '<option value="">まず企業名を選択</option>';
+        }
+        function updateStoreOptions() {
+            const a = document.getElementById('sched-area')?.value, c = document.getElementById('sched-company')?.value, sSel = document.getElementById('sched-store');
+            if (a && c && state.stores[a][c]) {
+                sSel.disabled = false; sSel.innerHTML = '<option value="">店舗名を選択</option>' + state.stores[a][c].sort().map(s => `<option value="${s}">${s}</option>`).join('');
+            }
+        }
+        
+        function updateEditCompanyOptions(selC=null) {
+            const a = document.getElementById('edit-sched-area')?.value, cSel = document.getElementById('edit-sched-company');
+            if (a && state.stores[a]) { cSel.innerHTML = '<option value="">企業名を選択</option>' + Object.keys(state.stores[a]).sort().map(c => `<option value="${c}">${c}</option>`).join(''); if(selC) cSel.value = selC; }
+        }
+        function updateEditStoreOptions(selS=null) {
+            const a = document.getElementById('edit-sched-area')?.value, c = document.getElementById('edit-sched-company')?.value, sSel = document.getElementById('edit-sched-store');
+            if (a && c && state.stores[a][c]) { sSel.innerHTML = '<option value="">店舗名を選択</option>' + state.stores[a][c].sort().map(s => `<option value="${s}">${s}</option>`).join(''); if(selS) sSel.value = selS; }
+        }
+
+        function updateSchedStaffDisplay() {
+            const s = document.getElementById('sched-staff'), es = document.getElementById('edit-sched-staff');
+            let o = '<option value="">担当者を選択</option>';
+            if (state.currentRole !== 'staff') {
+                const roleOrder = { 'システム管理者': 1, '管理者': 2, 'メンバー': 3 };
+                const sorted = [...state.staffs].sort((a,b) => {
+                    const diff = (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
+                    if (diff !== 0) return diff;
+                    const fA = (a.furigana || a.name || '').toString();
+                    const fB = (b.furigana || b.name || '').toString();
+                    return fA.localeCompare(fB, 'ja');
+                });
+                o += sorted.map(st => `<option value="${escapeHtml(st.name)}">${escapeHtml(st.name)}</option>`).join('');
+                if (s) { s.innerHTML = o; s.disabled = false; s.value = state.currentUser; }
+                if (es) { es.innerHTML = o; es.disabled = false; }
+            } else {
+                o = `<option value="${escapeHtml(state.currentUser)}">${escapeHtml(state.currentUser)}</option>`;
+                if (s) { s.innerHTML = o; s.disabled = true; }
+                if (es) { es.innerHTML = o; es.disabled = true; }
+            }
+        }
+
+        function renderSelects() {
+            const sa = document.getElementById('sched-area');
+            if(sa) sa.innerHTML = '<option value="">エリアを選択</option>' + getMergedAreaOptions().map(a => `<option value="${a}">${a}</option>`).join('');
+            updateSchedStaffDisplay();
+            
+            const cin = document.getElementById('checkin-schedule-id'), cout = document.getElementById('checkout-schedule-id');
+            const ts = state.schedules.filter(s => s.date === state.selectedDate && (!state.currentUser || s.staff === state.currentUser));
+            
+            if (cin) {
+                const unv = ts.filter(s => s.status === '未入店');
+                cin.innerHTML = unv.length ? '<option value="">選択してください</option>' + unv.map(s => `<option value="${s.id}">[${s.targetTime||'--:--'}] ${s.store}</option>`).join('') : '<option value="">予定なし</option>';
+            }
+            if (cout) {
+                const ins = ts.filter(s => s.status === '入店中');
+                cout.innerHTML = ins.length ? '<option value="">選択してください</option>' + ins.map(s => `<option value="${s.id}">[${s.checkinTime||'--:--'} 入店] ${s.store}</option>`).join('') : '<option value="">入店中なし</option>';
+            }
+        }
+
+        function renderAll() { renderProgressTable(); renderSelects(); renderMembers(); renderStores(); renderMemberSchedules(); updateRoleUI(); }
+
+        function openDetailModal(id) {
+            const s = state.schedules.find(x => x.id === id); if(!s) return;
+            state.activeDetailId = s.id;
+            document.getElementById('modal-date-badge').innerText = s.date;
+            document.getElementById('modal-store-fullname').innerText = (s.company||'') + s.store;
+            document.getElementById('modal-status-badge').innerText = s.status;
+            document.getElementById('modal-area').innerText = s.area;
+            document.getElementById('modal-task-type').innerText = s.taskType;
+            document.getElementById('modal-staff').innerText = s.staff;
+            document.getElementById('modal-target-time').innerText = s.targetTime || '-';
+            document.getElementById('modal-checkin-time').innerText = s.checkinTime || '-';
+            document.getElementById('modal-checkout-time').innerText = s.checkoutTime || '-';
+            document.getElementById('modal-memo').innerText = s.memo || 'なし';
+            
+            if (s.lat && s.lng) {
+                const mapLink = document.getElementById('modal-map-link');
+                mapLink.href = `https://www.google.com/maps?q=${s.lat},${s.lng}`;
+                document.getElementById('modal-map-container').classList.remove('hidden');
+            } else {
+                document.getElementById('modal-map-container').classList.add('hidden');
+            }
+
+            document.getElementById('detail-modal').classList.remove('hidden');
+        }
+        function closeDetailModal() { document.getElementById('detail-modal').classList.add('hidden'); }
+
+        function openEditScheduleModal() {
+            const s = state.schedules.find(x => x.id === state.activeDetailId); if(!s) return;
+            document.getElementById('edit-sched-id').value = s.id;
+            document.getElementById('edit-sched-date').value = s.date;
+            document.getElementById('edit-sched-status').value = s.status;
+            
+            const sa = document.getElementById('edit-sched-area');
+            sa.innerHTML = '<option value="">エリア</option>' + getMergedAreaOptions().map(a => `<option value="${a}">${a}</option>`).join(''); sa.value = s.area;
+            updateEditCompanyOptions(s.company); updateEditStoreOptions(s.store);
+            document.getElementById('edit-sched-task-type').value = s.taskType;
+            document.getElementById('edit-sched-target-time').value = s.targetTime;
+            document.getElementById('edit-sched-memo').value = s.memo;
+            
+            const isRest = state.currentRole !== 'superadmin';
+            ['edit-sched-date', 'edit-sched-status', 'edit-sched-area', 'edit-sched-company', 'edit-sched-store', 'edit-sched-task-type'].forEach(id => {
+                document.getElementById(id).disabled = isRest;
+            });
+            
+            document.getElementById('edit-schedule-modal').classList.remove('hidden');
+        }
+        function closeEditScheduleModal() { document.getElementById('edit-schedule-modal').classList.add('hidden'); }
+        
+        function handleUpdateSchedule(e) {
+            e.preventDefault();
+            const s = state.schedules.find(x => x.id === document.getElementById('edit-sched-id').value); if(!s) return;
+            s.date = document.getElementById('edit-sched-date').value;
+            s.status = document.getElementById('edit-sched-status').value;
+            s.area = document.getElementById('edit-sched-area').value;
+            s.company = document.getElementById('edit-sched-company').value;
+            s.store = document.getElementById('edit-sched-store').value;
+            s.staff = document.getElementById('edit-sched-staff').value;
+            s.taskType = document.getElementById('edit-sched-task-type').value;
+            s.targetTime = document.getElementById('edit-sched-target-time').value;
+            s.memo = document.getElementById('edit-sched-memo').value;
+            
+            silentSyncAllToGas(); closeEditScheduleModal(); closeDetailModal(); renderAll();
+        }
+        function deleteCurrentDetailSchedule() {
+            showConfirmDialog('削除', '予定を削除しますか？', () => {
+                state.schedules = state.schedules.filter(s => s.id !== state.activeDetailId);
+                silentSyncAllToGas(); closeDetailModal(); renderAll();
+            });
+        }
+
+        function renderMemberSchedules() {
+            const cnt = document.getElementById('member-schedule-list'); if(!cnt || state.currentRole === 'superadmin') return;
+            const ts = state.schedules.filter(s => s.date === state.selectedDate && s.staff === state.currentUser && s.status === '未入店' && !s.targetTime);
+            if (ts.length === 0) { cnt.innerHTML = '<div class="text-xs text-slate-400 p-4 border rounded bg-white">未登録の予定はありません</div>'; return; }
+            cnt.innerHTML = ts.map(s => `
+                <div class="border rounded-xl p-4 bg-white shadow-sm">
+                    <div class="font-bold text-sm mb-2">${(s.company||'')} ${s.store}</div>
+                    <input type="time" id="mem-t-${s.id}" class="w-full p-2 border rounded mb-2 text-xs">
+                    <button onclick="handleMemberTimeSubmit('${s.id}')" class="w-full py-2 bg-rose-600 text-white rounded text-xs">時間を登録</button>
+                </div>
+            `).join('');
+        }
+        function handleMemberTimeSubmit(id) {
+            const t = document.getElementById(`mem-t-${id}`).value; if(!t) return;
+            const s = state.schedules.find(x => x.id === id); if(s) { s.targetTime = t; silentSyncAllToGas(); renderAll(); }
+        }
+
+        function openSheetsModal() {
+            document.getElementById('gas-url-input').value = state.gasUrl;
+            document.getElementById('sheet-direct-url-input').value = state.sheetDirectUrl;
+            document.getElementById('sheets-modal').classList.remove('hidden');
+        }
+        function closeSheetsModal() { document.getElementById('sheets-modal').classList.add('hidden'); }
+
+        function saveGasSettings() {
+            const url = document.getElementById('gas-url-input').value.trim();
+            state.gasUrl = url;
+            safeStorage.setItem('ds_gas_url', url);
+            updateGasDot(); showToast('保存しました'); setTimeout(testGasConnection, 500);
+        }
+        function saveSheetDirectUrl() { 
+            state.sheetDirectUrl = document.getElementById('sheet-direct-url-input').value; 
+            safeStorage.setItem('ds_sheet_direct_url', state.sheetDirectUrl);
+        }
+        function openSpreadsheetDirect() { if (state.sheetDirectUrl) window.open(state.sheetDirectUrl, '_blank'); }
+
+        function updateGasDot() {
+            const dot = document.getElementById('sheets-status-dot'), lbl = document.getElementById('sheets-status-label');
+            if (state.gasUrl) { if(dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse'; if(lbl) lbl.innerText = '連携中'; }
+            else { if(dot) dot.className = 'w-2.5 h-2.5 rounded-full bg-slate-600'; if(lbl) lbl.innerText = '未接続'; }
+        }
+
+        function updateLastSyncTime() {
+            const el = document.getElementById('last-sync-time');
+            if(el) {
+                const d = new Date();
+                el.innerText = `最終同期: ${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+            }
+        }
+
+        async function callGasApi(action, payload = {}, quiet = false) {
+            if (!state.gasUrl) throw new Error('GAS URLが設定されていません');
+            try {
+                const res = await fetch(state.gasUrl, { method: 'POST', body: JSON.stringify({action, ...payload}) });
+                if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+                return await res.json();
+            } catch (err) {
+                if (!quiet) console.error("GAS Sync Error:", err);
+                throw err;
+            }
+        }
+
+        let isSyncing = false;
+        async function syncAllToGas() {
+            if (isSyncing) return; isSyncing = true; showToast('送信中...');
+            try {
+                await callGasApi('syncAll', { schedules: state.schedules, stores: state.stores, staffs: state.staffs, areas: state.areas });
+                showToast('✅ 送信完了', 'success');
+                updateLastSyncTime();
+            } catch(e) { 
+                showToast('❌ 送信エラー: URLを確認してください', 'error'); 
+            } finally { 
+                isSyncing = false; 
+            }
+        }
+        
+        let isFetching = false;
+        async function fetchFromGas(bg = false) {
+            if (isFetching) return; isFetching = true;
+            try {
+                const res = await callGasApi('fetchAll', {}, bg); // bg(バックグラウンド)時はコンソールエラーを抑制
+                if (res.data) {
+                    if (res.data.schedules) state.schedules = res.data.schedules;
+                    if (res.data.stores) state.stores = res.data.stores;
+                    if (res.data.staffs) state.staffs = res.data.staffs;
+                    if (res.data.areas) state.areas = res.data.areas;
+                    renderAll(); 
+                    if(!bg) showToast('✅ 取得完了');
+                    updateLastSyncTime();
+                }
+            } catch(e) { 
+                if(!bg) showToast('❌ 取得エラー: URLを確認してください', 'error'); 
+            } finally { 
+                isFetching = false; 
+            }
+        }
+        
+        async function testGasConnection() {
+            try { await callGasApi('ping'); showToast('✅ 接続成功'); } catch(e) { showToast('❌ 接続エラー: URLを確認してください', 'error'); }
+        }
+
+        async function silentSyncAllToGas() {
+            if (!state.gasUrl || isSyncing) return; isSyncing = true;
+            try { 
+                await callGasApi('syncAll', { schedules: state.schedules, stores: state.stores, staffs: state.staffs, areas: state.areas }, true); 
+                updateLastSyncTime();
+            } 
+            catch(e) { /* バックグラウンド送信のエラーは無視する */ } finally { isSyncing = false; }
+        }
+
+        function showConfirmDialog(title, msg, onOk) {
+            document.getElementById('confirm-modal-title').innerText = title;
+            document.getElementById('confirm-modal-message').innerText = msg;
+            document.getElementById('confirm-modal-ok').onclick = () => { document.getElementById('confirm-modal').classList.add('hidden'); onOk(); };
+            document.getElementById('confirm-modal-cancel').onclick = () => document.getElementById('confirm-modal').classList.add('hidden');
+            document.getElementById('confirm-modal').classList.remove('hidden');
+        }
+
+        function showToast(msg, type = 'info') {
+            const cnt = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = `px-4 py-3 rounded-xl text-white text-xs shadow-lg animate-fade-in ${type==='error'?'bg-rose-600':type==='success'?'bg-emerald-600':'bg-slate-800'}`;
+            t.innerText = msg; cnt.appendChild(t); setTimeout(() => t.remove(), 3000);
+        }
+
+        function exportToCSV() {
+            let csv = '\uFEFFステータス,エリア,店舗名,種別,担当者,入店予定,入店,退店\n';
+            state.schedules.filter(s=>s.date===state.selectedDate).forEach(s => csv += `"${s.status}","${s.area}","${s.store}","${s.taskType}","${s.staff}","${s.targetTime}","${s.checkinTime}","${s.checkoutTime}"\n`);
+            const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'data.csv'; a.click();
+        }
+
+        async function setupGasAlertTrigger() {
+            try { await callGasApi('setupTrigger'); showToast('✅ アラート設定成功'); } catch(e) { showToast('❌ アラート設定エラー', 'error'); }
+        }
+
+        function initGasScriptTemplate() {
+            const code = `// ==========================================
+// DS system スプレッドシート連携スクリプト
+// ==========================================
+function doPost(e) {
+  try {
+    if (!e || !e.postData || !e.postData.contents) return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'No payload' })).setMimeType(ContentService.MimeType.JSON);
+    const payload = JSON.parse(e.postData.contents);
+    const action = payload.action;
+
+    if (action === 'ping') return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'pong' })).setMimeType(ContentService.MimeType.JSON);
+    
+    if (action === 'syncAll') {
+      saveDataToSheets(payload);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === 'fetchAll') {
+      const data = loadDataFromSheets();
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: data })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Unknown action' })).setMimeType(ContentService.MimeType.JSON);
+  } catch (error) {
+    return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: error.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+function doGet(e) {
+  return ContentService.createTextOutput("DS system GAS API is running.");
+}
+
+function getOrCreateSheet(sheetName) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sheet = ss.getSheetByName(sheetName);
+  if (!sheet) sheet = ss.insertSheet(sheetName);
+  return sheet;
+}
+
+function saveDataToSheets(data) {
+  if (data.schedules) {
+    const sheet = getOrCreateSheet('訪店予定_進捗');
+    sheet.clear();
+    const rows = [['ID', '日付', 'ステータス', 'エリア', '企業名', '店舗名', '種別', '担当者', '入店予定時間', '入店時間', '退店時間', '緯度', '経度', 'マップ確認', '連絡事項']];
+    data.schedules.forEach(s => {
+      const mapLink = (s.lat && s.lng) ? '=HYPERLINK("https://www.google.com/maps?q=' + s.lat + ',' + s.lng + '", "📍 マップを開く")' : '';
+      rows.push([s.id, s.date, s.status, s.area, s.company, s.store, s.taskType, s.staff, s.targetTime, s.checkinTime, s.checkoutTime, s.lat || '', s.lng || '', mapLink, s.memo]);
+    });
+    sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  if (data.staffs) {
+    const sheet = getOrCreateSheet('メンバーマスタ');
+    sheet.clear();
+    const rows = [['ID', '氏名', 'フリガナ', '権限', 'パスワード', '電話番号', 'メールアドレス', '担当エリア', 'アラート受信']];
+    data.staffs.forEach(s => rows.push([s.id, s.name, s.furigana || '', s.role, s.password, s.phone, s.email, (s.area||[]).join(','), s.receiveAlert]));
+    sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+  if (data.stores) {
+    const sheet = getOrCreateSheet('店舗マスタ');
+    sheet.clear();
+    const rows = [['エリア', '企業名', '店舗名']];
+    Object.keys(data.stores).forEach(area => {
+      Object.keys(data.stores[area]).forEach(comp => {
+        data.stores[area][comp].forEach(store => rows.push([area, comp, store]));
+      });
+    });
+    if (rows.length > 1) sheet.getRange(1, 1, rows.length, rows[0].length).setValues(rows);
+  }
+}
+
+function loadDataFromSheets() {
+  const result = { schedules: [], staffs: [], stores: {} };
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  
+  const schedSheet = ss.getSheetByName('訪店予定_進捗');
+  if (schedSheet) {
+    const data = schedSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      let memoVal = '';
+      if (data[i].length > 14) memoVal = String(data[i][14]);
+      else if (data[i].length > 13 && String(data[i][13]).indexOf('HYPERLINK') === -1 && String(data[i][13]).indexOf('📍') === -1) memoVal = String(data[i][13]);
+
+      result.schedules.push({
+        id: String(data[i][0]), date: String(data[i][1]), status: String(data[i][2]), area: String(data[i][3]), company: String(data[i][4]), store: String(data[i][5]),
+        taskType: String(data[i][6]), staff: String(data[i][7]), targetTime: String(data[i][8]), checkinTime: String(data[i][9]), checkoutTime: String(data[i][10]),
+        lat: data[i][11], lng: data[i][12], memo: memoVal
+      });
+    }
+  }
+  
+  const staffSheet = ss.getSheetByName('メンバーマスタ');
+  if (staffSheet) {
+    const data = staffSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      result.staffs.push({
+        id: String(data[i][0]).padStart(4, '0'), name: String(data[i][1]), furigana: String(data[i][2]), role: String(data[i][3]), password: String(data[i][4]),
+        phone: String(data[i][5]), email: String(data[i][6]), area: String(data[i][7]).split(',').filter(Boolean), receiveAlert: data[i][8] === true || data[i][8] === 'true'
+      });
+    }
+  }
+
+  const storeSheet = ss.getSheetByName('店舗マスタ');
+  if (storeSheet) {
+    const data = storeSheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      const a = String(data[i][0]), c = String(data[i][1]), s = String(data[i][2]);
+      if (!result.stores[a]) result.stores[a] = {};
+      if (!result.stores[a][c]) result.stores[a][c] = [];
+      if (!result.stores[a][c].includes(s)) result.stores[a][c].push(s);
+    }
+  }
+  return result;
+}
+
+function setupTrigger() {
+  // アラートトリガーなどを設定するコード（ダミー実装）
+  return ContentService.createTextOutput(JSON.stringify({ status: 'success', message: 'Trigger setup complete.' })).setMimeType(ContentService.MimeType.JSON);
+}`;
+            const el = document.getElementById('gas-script-template');
+            if (el) el.value = code;
+        }
+
+        function copyGasScriptCode() {
+            const el = document.getElementById('gas-script-template');
+            if (!el) return;
+            el.select();
+            document.execCommand('copy');
+            showToast('コードをコピーしました', 'success');
+        }
+    </script>
+</body>
+</html>
