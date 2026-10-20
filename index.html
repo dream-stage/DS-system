@@ -1708,8 +1708,11 @@
         }
 
         let isSyncing = false;
+        let pendingSync = false;
+        
         async function syncAllToGas() {
-            if (isSyncing) return; isSyncing = true; showToast('送信中...');
+            if (isSyncing) { pendingSync = true; return; }
+            isSyncing = true; showToast('送信中...');
             try {
                 await callGasApi('syncAll', { schedules: state.schedules, stores: state.stores, staffs: state.staffs, areas: state.areas });
                 showToast('✅ 送信完了', 'success');
@@ -1718,6 +1721,7 @@
                 showToast('❌ 送信エラー: URLを確認してください', 'error'); 
             } finally { 
                 isSyncing = false; 
+                if (pendingSync) { pendingSync = false; silentSyncAllToGas(); }
             }
         }
         
@@ -1747,12 +1751,17 @@
         }
 
         async function silentSyncAllToGas() {
-            if (!state.gasUrl || isSyncing) return; isSyncing = true;
+            if (!state.gasUrl) return;
+            if (isSyncing) { pendingSync = true; return; }
+            isSyncing = true;
             try { 
                 await callGasApi('syncAll', { schedules: state.schedules, stores: state.stores, staffs: state.staffs, areas: state.areas }, true); 
                 updateLastSyncTime();
             } 
-            catch(e) { } finally { isSyncing = false; }
+            catch(e) { } finally { 
+                isSyncing = false; 
+                if (pendingSync) { pendingSync = false; silentSyncAllToGas(); }
+            }
         }
 
         function showConfirmDialog(title, msg, onOk) {
