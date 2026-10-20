@@ -2,7 +2,6 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <!-- アプリケーション名をDS systemとして定義 -->
     <meta name="application-name" content="DS system">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
@@ -853,7 +852,6 @@
 
         const state = {
             selectedDate: getSafeLocalDateStr(), currentUser: null, currentUserId: null, currentRole: 'superadmin', originalRole: 'superadmin', activeDetailId: null,
-            // ★ここに発行したGAS WebアプリのURLを直接設定しておくと、リロードしても消えません
             gasUrl: USER_GAS_URL,
             sheetDirectUrl: USER_SHEET_DIRECT_URL,
             areas: ['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄'],
@@ -936,7 +934,6 @@
             state.originalRole = staff.role === 'システム管理者' ? 'superadmin' : (staff.role === '管理者' ? 'admin' : 'staff');
             state.currentRole = state.originalRole;
             
-            // ログアウト状態を完全にリセット
             try { sessionStorage.removeItem('ds_logged_out'); } catch(err) {}
 
             updateRoleUI();
@@ -1114,7 +1111,6 @@
             updateDateDisplays();
             initGasScriptTemplate();
             
-            // ソースコードに直接書かれたURLを優先し、なければストレージから読み込む
             state.gasUrl = state.gasUrl || safeStorage.getItem('ds_gas_url') || '';
             state.sheetDirectUrl = state.sheetDirectUrl || safeStorage.getItem('ds_sheet_direct_url') || '';
             
@@ -1122,19 +1118,17 @@
 
             const g = document.getElementById('gas-url-input'); if(g && state.gasUrl) g.value = state.gasUrl;
             
-            // ログイン情報の自動入力を防ぐため、初期化時に空にする (遅延実行でブラウザの補完を上書き)
             setTimeout(() => {
                 document.getElementById('login-id').value = '';
                 document.getElementById('login-pw').value = '';
             }, 100);
-            safeStorage.removeItem('ds_saved_user'); // 古い保存データも削除
+            safeStorage.removeItem('ds_saved_user');
         });
 
         async function fetchRobustLocation(forceRefresh = false) {
             if (window.isSecureContext === false) throw { code: 99 };
             return new Promise((resolve, reject) => {
                 if (!navigator.geolocation) reject({code: -1});
-                // forceRefreshがfalseの場合は、過去30秒(30000ms)のキャッシュを利用して取得を高速化
                 navigator.geolocation.getCurrentPosition(
                     pos => resolve({lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, source: 'GPS'}),
                     err => reject(err), { enableHighAccuracy: true, timeout: 7000, maximumAge: forceRefresh ? 0 : 30000 }
@@ -1194,7 +1188,6 @@
             document.getElementById('app-shell').classList.add('hidden');
             document.getElementById('login-view').classList.remove('hidden');
             
-            // ログアウト時は確実に入力欄を空にする
             document.getElementById('login-id').value = '';
             document.getElementById('login-pw').value = '';
         }
@@ -1255,7 +1248,7 @@
             if (!state.gasUrl) { window.location.href = `mailto:${email}?subject=DS system登録完了&body=ID:${id} PW:${pw}`; return; }
             try {
                 const res = await callGasApi('sendWelcomeEmail', { email, id, password: pw });
-                if (res.status === 'success') showToast('メール送信成功'); else throw new Error();
+                if (res.status === 'success') showToast('メール送信に成功しました', 'success'); else throw new Error();
             } catch(e) { window.location.href = `mailto:${email}?subject=DS system登録完了&body=ID:${id} PW:${pw}`; }
         }
 
@@ -1276,7 +1269,7 @@
             document.getElementById('edit-member-phone').value = staff.phone;
             document.getElementById('edit-member-email').value = staff.email;
             document.getElementById('edit-member-receive-alert').checked = staff.receiveAlert === true;
-            document.getElementById('edit-member-send-email').checked = false; // モーダルを開くたびにオフにする
+            document.getElementById('edit-member-send-email').checked = false;
             document.getElementById('edit-member-modal').classList.remove('hidden');
         }
         function closeEditMemberModal() { document.getElementById('edit-member-modal').classList.add('hidden'); }
@@ -1315,23 +1308,18 @@
             let lst = state.staffs.filter(s => s.name.toLowerCase().includes(q) || (s.furigana||'').toLowerCase().includes(q) || s.id.includes(q) || (s.area||[]).join(',').includes(q));
             if (state.currentRole !== 'superadmin') lst = lst.filter(s => s.role !== 'システム管理者');
             
-            // 権限の順位
             const roleOrder = { 'システム管理者': 1, '管理者': 2, 'メンバー': 3 };
             
             lst.sort((a, b) => {
-                // 1. 権限順
                 const roleDiff = (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
                 if (roleDiff !== 0) return roleDiff;
                 
-                // フリガナ（未設定時は名前にフォールバック）を準備
                 const fA = (a.furigana || a.name || '').toString();
                 const fB = (b.furigana || b.name || '').toString();
 
                 if (a.role === 'システム管理者') {
-                    // システム管理者はエリアを考慮せず、フリガナ(50音順)
                     return fA.localeCompare(fB, 'ja');
                 } else {
-                    // 2. 担当エリアの最初の都道府県順
                     const getFirstAreaIndex = (areas) => {
                         const validAreas = getMemberAreaList(areas).filter(area => area !== '未設定エリア');
                         let minIdx = 999;
@@ -1345,7 +1333,6 @@
                     const areaDiff = getFirstAreaIndex(a.area) - getFirstAreaIndex(b.area);
                     if (areaDiff !== 0) return areaDiff; 
                     
-                    // 3. 同じ都道府県ならフリガナ(50音順)
                     return fA.localeCompare(fB, 'ja');
                 }
             });
@@ -1483,7 +1470,7 @@
                 
                 if (sH || (!q && displayAreas.includes(a))) {
                      const isCustomArea = !['福岡', '佐賀', '長崎', '熊本', '大分', '宮崎', '鹿児島', '沖縄'].includes(a);
-                     const canDeleteArea = !sH && isCustomArea; // 店舗も企業も登録されていない新規追加エリアのみ削除可能
+                     const canDeleteArea = !sH && isCustomArea;
                      
                      h += `<details class="mb-3 border rounded-xl bg-white shadow-sm group" ${q?'open':''}><summary class="font-bold p-3 cursor-pointer text-emerald-800 bg-emerald-50/50 rounded-t-xl group-open:border-b border-slate-100 flex items-center justify-between select-none">
                      <span class="flex items-center gap-2">${escapeHtml(a)} <i class="fa-solid fa-chevron-down text-emerald-600/50 text-xs transition-transform group-open:rotate-180"></i></span>
@@ -1718,7 +1705,7 @@
         async function fetchFromGas(bg = false) {
             if (isFetching) return; isFetching = true;
             try {
-                const res = await callGasApi('fetchAll', {}, bg); // bg(バックグラウンド)時はコンソールエラーを抑制
+                const res = await callGasApi('fetchAll', {}, bg); 
                 if (res.data) {
                     if (res.data.schedules) state.schedules = res.data.schedules;
                     if (res.data.stores) state.stores = res.data.stores;
@@ -1745,7 +1732,7 @@
                 await callGasApi('syncAll', { schedules: state.schedules, stores: state.stores, staffs: state.staffs, areas: state.areas }, true); 
                 updateLastSyncTime();
             } 
-            catch(e) { /* バックグラウンド送信のエラーは無視する */ } finally { isSyncing = false; }
+            catch(e) { } finally { isSyncing = false; }
         }
 
         function showConfirmDialog(title, msg, onOk) {
@@ -1793,6 +1780,19 @@ function doPost(e) {
     if (action === 'fetchAll') {
       const data = loadDataFromSheets();
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: data })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    // 【新規追加】登録メール送信処理
+    if (action === 'sendWelcomeEmail') {
+      const subject = '【DS system】メンバー登録完了のお知らせ';
+      const body = 'DS systemへの登録が完了しました。\\n\\n' +
+                   '■ログイン情報\\n' +
+                   'ユーザーID: ' + payload.id + '\\n' +
+                   'パスワード: ' + payload.password + '\\n\\n' +
+                   'アプリのURLよりログインしてください。\\n' +
+                   '※このメールは自動送信されています。';
+      MailApp.sendEmail(payload.email, subject, body);
+      return ContentService.createTextOutput(JSON.stringify({ status: 'success' })).setMimeType(ContentService.MimeType.JSON);
     }
     
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', message: 'Unknown action' })).setMimeType(ContentService.MimeType.JSON);
