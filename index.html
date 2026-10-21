@@ -338,8 +338,8 @@
                                 <select id="sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled selected hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">担当者 <span class="text-rose-500">*</span></label>
-                                <select id="sched-staff" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">担当者</label>
+                                <select id="sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間</label>
@@ -782,7 +782,7 @@
                     <div><label class="block text-xs font-semibold text-slate-600 mb-1">企業名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-company" onchange="updateEditStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
                     <div><label class="block text-xs font-semibold text-slate-600 mb-1">店舗名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
                     <div><label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label><select id="edit-sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select></div>
-                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">担当者 <span class="text-rose-500">*</span></label><select id="edit-sched-staff" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">担当者</label><select id="edit-sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
                     <div id="edit-sched-target-time-container">
                         <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間 <span class="text-rose-500">*</span></label>
                         <input type="text" id="edit-sched-target-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
@@ -1072,10 +1072,15 @@
                 let badg = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-600 border border-slate-200">未入店</span>';
                 if (s.status === '入店中') badg = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700 border border-emerald-300 animate-pulse">入店中</span>';
                 else if (s.status === '退店済') badg = '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-100 text-sky-700 border border-sky-300">退店済</span>';
+                
+                const staffDisplay = (!s.staff || s.staff === '未定') 
+                    ? '<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">未定</span>' 
+                    : escapeHtml(s.staff);
+
                 return `
                 <tr class="hover:bg-slate-50 border-b border-slate-100">
                     <td class="p-3">${badg}</td><td class="p-3">${escapeHtml(s.area)}</td><td class="p-3 font-bold">${escapeHtml((s.company||'')+s.store)}</td>
-                    <td class="p-3">${escapeHtml(s.taskType||'-')}</td><td class="p-3">${escapeHtml(s.staff)}</td>
+                    <td class="p-3">${escapeHtml(s.taskType||'-')}</td><td class="p-3">${staffDisplay}</td>
                     <td class="p-3 font-mono">${s.targetTime||'-'}</td><td class="p-3 font-mono text-emerald-600">${s.checkinTime||'-'}</td>
                     <td class="p-3 font-mono text-sky-600">${s.checkoutTime||'-'}</td>
                     <td class="p-3 text-center"><button onclick="openDetailModal('${s.id}')" class="px-2.5 py-1 bg-brand-50 text-brand-600 rounded-lg text-[11px] border border-brand-200">詳細</button></td>
@@ -1209,7 +1214,7 @@
             if (!a || !c || !s) { showToast('入力が必要です'); return; }
             state.schedules.push({
                 id: String(Date.now()), date: state.selectedDate, area: a, company: c, store: s,
-                staff: document.getElementById('sched-staff').value, taskType: document.getElementById('sched-task-type').value,
+                staff: document.getElementById('sched-staff').value || '未定', taskType: document.getElementById('sched-task-type').value,
                 targetTime: document.getElementById('sched-time').value, status: '未入店', memo: document.getElementById('sched-memo').value
             });
             showToast('訪店予定を登録しました');
@@ -1546,7 +1551,7 @@
 
         function updateSchedStaffDisplay() {
             const s = document.getElementById('sched-staff'), es = document.getElementById('edit-sched-staff');
-            let o = '<option value="">担当者を選択</option>';
+            let o = '<option value="未定">未定 (後で担当者を決める)</option>';
             if (state.currentRole !== 'staff') {
                 const roleOrder = { 'システム管理者': 1, '管理者': 2, 'メンバー': 3 };
                 const sorted = [...state.staffs].sort((a,b) => {
@@ -1557,7 +1562,7 @@
                     return fA.localeCompare(fB, 'ja');
                 });
                 o += sorted.map(st => `<option value="${escapeHtml(st.name)}">${escapeHtml(st.name)}</option>`).join('');
-                if (s) { s.innerHTML = o; s.disabled = false; s.value = state.currentUser; }
+                if (s) { s.innerHTML = o; s.disabled = false; s.value = '未定'; }
                 if (es) { es.innerHTML = o; es.disabled = false; }
             } else {
                 o = `<option value="${escapeHtml(state.currentUser)}">${escapeHtml(state.currentUser)}</option>`;
@@ -1594,7 +1599,9 @@
             document.getElementById('modal-status-badge').innerText = s.status;
             document.getElementById('modal-area').innerText = s.area;
             document.getElementById('modal-task-type').innerText = s.taskType;
-            document.getElementById('modal-staff').innerText = s.staff;
+            
+            document.getElementById('modal-staff').innerHTML = (!s.staff || s.staff === '未定') ? '<span class="text-rose-600 font-bold">未定</span>' : escapeHtml(s.staff);
+            
             document.getElementById('modal-target-time').innerText = s.targetTime || '-';
             document.getElementById('modal-checkin-time').innerText = s.checkinTime || '-';
             document.getElementById('modal-checkout-time').innerText = s.checkoutTime || '-';
@@ -1622,6 +1629,7 @@
             sa.innerHTML = '<option value="">エリア</option>' + getMergedAreaOptions().map(a => `<option value="${a}">${a}</option>`).join(''); sa.value = s.area;
             updateEditCompanyOptions(s.company); updateEditStoreOptions(s.store);
             document.getElementById('edit-sched-task-type').value = s.taskType;
+            document.getElementById('edit-sched-staff').value = s.staff || '未定';
             document.getElementById('edit-sched-target-time').value = s.targetTime;
             document.getElementById('edit-sched-memo').value = s.memo;
             
@@ -1642,7 +1650,7 @@
             s.area = document.getElementById('edit-sched-area').value;
             s.company = document.getElementById('edit-sched-company').value;
             s.store = document.getElementById('edit-sched-store').value;
-            s.staff = document.getElementById('edit-sched-staff').value;
+            s.staff = document.getElementById('edit-sched-staff').value || '未定';
             s.taskType = document.getElementById('edit-sched-task-type').value;
             s.targetTime = document.getElementById('edit-sched-target-time').value;
             s.memo = document.getElementById('edit-sched-memo').value;
@@ -1792,7 +1800,7 @@
 
         function exportToCSV() {
             let csv = '\uFEFFステータス,エリア,店舗名,種別,担当者,入店予定,入店,退店\n';
-            state.schedules.filter(s=>s.date===state.selectedDate).forEach(s => csv += `"${s.status}","${s.area}","${s.store}","${s.taskType}","${s.staff}","${s.targetTime}","${s.checkinTime}","${s.checkoutTime}"\n`);
+            state.schedules.filter(s=>s.date===state.selectedDate).forEach(s => csv += `"${s.status}","${s.area}","${s.store}","${s.taskType}","${s.staff || '未定'}","${s.targetTime}","${s.checkinTime}","${s.checkoutTime}"\n`);
             const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'})); a.download = 'data.csv'; a.click();
         }
 
