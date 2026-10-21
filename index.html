@@ -1111,8 +1111,19 @@
             updateDateDisplays();
             initGasScriptTemplate();
             
-            state.gasUrl = state.gasUrl || safeStorage.getItem('ds_gas_url') || '';
-            state.sheetDirectUrl = state.sheetDirectUrl || safeStorage.getItem('ds_sheet_direct_url') || '';
+            const savedGasUrl = safeStorage.getItem('ds_gas_url');
+            if (savedGasUrl) {
+                state.gasUrl = savedGasUrl;
+            } else {
+                state.gasUrl = USER_GAS_URL || '';
+            }
+            
+            const savedSheetUrl = safeStorage.getItem('ds_sheet_direct_url');
+            if (savedSheetUrl) {
+                state.sheetDirectUrl = savedSheetUrl;
+            } else {
+                state.sheetDirectUrl = USER_SHEET_DIRECT_URL || '';
+            }
             
             updateGasDot();
 
