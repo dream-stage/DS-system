@@ -1381,18 +1381,17 @@
             let lst = state.staffs.filter(s => s.name.toLowerCase().includes(q) || (s.furigana||'').toLowerCase().includes(q) || s.id.includes(q) || (s.area||[]).join(',').includes(q));
             if (state.currentRole !== 'superadmin') lst = lst.filter(s => s.role !== 'システム管理者');
             
+            // 登録順（元の配列のインデックス）を保持する
+            let lstWithIndex = lst.map((s, index) => ({ ...s, _origIndex: index }));
             const roleOrder = { 'システム管理者': 1, '管理者': 2, 'メンバー': 3 };
             
-            lst.sort((a, b) => {
+            lstWithIndex.sort((a, b) => {
+                // 1. 権限でソート（システム管理者 → 管理者 → メンバー）
                 const roleDiff = (roleOrder[a.role] || 99) - (roleOrder[b.role] || 99);
                 if (roleDiff !== 0) return roleDiff;
                 
-                const fA = (a.furigana || a.name || '').toString();
-                const fB = (b.furigana || b.name || '').toString();
-
-                if (a.role === 'システム管理者') {
-                    return fA.localeCompare(fB, 'ja');
-                } else {
+                // 2. 権限が「メンバー」の場合のみ、エリア順でソート
+                if (a.role === 'メンバー') {
                     const getFirstAreaIndex = (areas) => {
                         const validAreas = getMemberAreaList(areas).filter(area => area !== '未設定エリア');
                         let minIdx = 999;
@@ -1405,12 +1404,13 @@
                     
                     const areaDiff = getFirstAreaIndex(a.area) - getFirstAreaIndex(b.area);
                     if (areaDiff !== 0) return areaDiff; 
-                    
-                    return fA.localeCompare(fB, 'ja');
                 }
+                
+                // 3. 同じ権限（メンバーの場合は同じエリア内）であれば、登録順（元のインデックス順）にする
+                return a._origIndex - b._origIndex;
             });
             
-            cnt.innerHTML = lst.map(s => {
+            cnt.innerHTML = lstWithIndex.map(s => {
                 const sortedAreas = sortAreas(getMemberAreaList(s.area).filter(a => a !== '未設定エリア'));
                 const aHtml = sortedAreas.map(a => `<span class="px-1.5 py-0.5 bg-rose-50 border rounded text-[10px] mr-1">${a}</span>`).join('');
                 return `<div class="p-4 bg-slate-50 border rounded-xl relative group">
@@ -1450,7 +1450,7 @@
             if (v === '__NEW__') c.classList.remove('hidden'); else c.classList.add('hidden');
             
             const cs = document.getElementById('store-form-company-select');
-            cs.innerHTML = '<option value="">企業名</option>' + (state.stores[v] ? Object.keys(state.stores[v]).sort().map(x => `<option value="${x}">${x}</option>`).join('') : '') + '<option value="__NEW__">＋新規企業名</option>';
+            cs.innerHTML = '<option value="">企業名</option>' + (state.stores[v] ? Object.keys(state.stores[v]).sort((x, y) => x.localeCompare(y, 'ja')).map(x => `<option value="${x}">${x}</option>`).join('') : '') + '<option value="__NEW__">＋新規企業名</option>';
         }
         function onStoreFormCompanyChange() {
             const v = document.getElementById('store-form-company-select').value;
@@ -1531,8 +1531,8 @@
             displayAreas.forEach(a => {
                 let sH = '';
                 if (state.stores[a]) {
-                    Object.keys(state.stores[a]).sort().forEach(c => {
-                        const sts = state.stores[a][c].filter(s => !q || (a+c+s).toLowerCase().includes(q)).sort();
+                    Object.keys(state.stores[a]).sort((c1, c2) => c1.localeCompare(c2, 'ja')).forEach(c => {
+                        const sts = state.stores[a][c].filter(s => !q || (a+c+s).toLowerCase().includes(q)).sort((s1, s2) => s1.localeCompare(s2, 'ja'));
                         if (sts.length > 0) {
                             sH += `<div class="bg-white p-3 rounded-xl border mb-2"><div class="font-bold text-sm mb-2">${escapeHtml(c)}</div><div class="grid grid-cols-1 sm:grid-cols-2 gap-2">`;
                             sts.forEach(s => {
@@ -1570,24 +1570,24 @@
         function updateCompanyOptions() {
             const a = document.getElementById('sched-area')?.value, cSel = document.getElementById('sched-company'), sSel = document.getElementById('sched-store');
             if (a && state.stores[a]) {
-                cSel.disabled = false; cSel.innerHTML = '<option value="">企業名を選択</option>' + Object.keys(state.stores[a]).sort().map(c => `<option value="${c}">${c}</option>`).join('');
+                cSel.disabled = false; cSel.innerHTML = '<option value="">企業名を選択</option>' + Object.keys(state.stores[a]).sort((x, y) => x.localeCompare(y, 'ja')).map(c => `<option value="${c}">${c}</option>`).join('');
             } else { cSel.disabled = true; cSel.innerHTML = '<option value="">まずエリアを選択</option>'; }
             sSel.disabled = true; sSel.innerHTML = '<option value="">まず企業名を選択</option>';
         }
         function updateStoreOptions() {
             const a = document.getElementById('sched-area')?.value, c = document.getElementById('sched-company')?.value, sSel = document.getElementById('sched-store');
             if (a && c && state.stores[a][c]) {
-                sSel.disabled = false; sSel.innerHTML = '<option value="">店舗名を選択</option>' + state.stores[a][c].sort().map(s => `<option value="${s}">${s}</option>`).join('');
+                sSel.disabled = false; sSel.innerHTML = '<option value="">店舗名を選択</option>' + state.stores[a][c].sort((x, y) => x.localeCompare(y, 'ja')).map(s => `<option value="${s}">${s}</option>`).join('');
             }
         }
         
         function updateEditCompanyOptions(selC=null) {
             const a = document.getElementById('edit-sched-area')?.value, cSel = document.getElementById('edit-sched-company');
-            if (a && state.stores[a]) { cSel.innerHTML = '<option value="">企業名を選択</option>' + Object.keys(state.stores[a]).sort().map(c => `<option value="${c}">${c}</option>`).join(''); if(selC) cSel.value = selC; }
+            if (a && state.stores[a]) { cSel.innerHTML = '<option value="">企業名を選択</option>' + Object.keys(state.stores[a]).sort((x, y) => x.localeCompare(y, 'ja')).map(c => `<option value="${c}">${c}</option>`).join(''); if(selC) cSel.value = selC; }
         }
         function updateEditStoreOptions(selS=null) {
             const a = document.getElementById('edit-sched-area')?.value, c = document.getElementById('edit-sched-company')?.value, sSel = document.getElementById('edit-sched-store');
-            if (a && c && state.stores[a][c]) { sSel.innerHTML = '<option value="">店舗名を選択</option>' + state.stores[a][c].sort().map(s => `<option value="${s}">${s}</option>`).join(''); if(selS) sSel.value = selS; }
+            if (a && c && state.stores[a][c]) { sSel.innerHTML = '<option value="">店舗名を選択</option>' + state.stores[a][c].sort((x, y) => x.localeCompare(y, 'ja')).map(s => `<option value="${s}">${s}</option>`).join(''); if(selS) sSel.value = selS; }
         }
 
         function updateSchedStaffDisplay() {
