@@ -784,8 +784,8 @@
                     <div><label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label><select id="edit-sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select></div>
                     <div><label class="block text-xs font-semibold text-slate-600 mb-1">担当者</label><select id="edit-sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
                     <div id="edit-sched-target-time-container">
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間 <span class="text-rose-500">*</span></label>
-                        <input type="text" id="edit-sched-target-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間</label>
+                        <input type="text" id="edit-sched-target-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
                     </div>
                     <div class="sm:col-span-3"><label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label><textarea id="edit-sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea></div>
                 </div>
@@ -813,12 +813,10 @@
 
     <script>
         // ★★★ 【重要】GAS連携がリセットされる場合は、ここにURLを直接貼り付けてください ★★★
-        // 例: const USER_GAS_URL = 'https://script.google.com/macros/s/xxxx/exec';
-        const USER_GAS_URL = 'https://script.google.com/macros/s/AKfycbw0VWQ9QPy7iV-bxdXRcrce0OoYnxsEK3ggJol_FD9jyMFcG-6pQCZu-4wlTe7br0B4lg/exec';
+        const USER_GAS_URL = 'https://script.google.com/macros/s/AKfycbywBUJMKDZ5zIGer5Ag8bprJ1RU62LsU_YPxwRUgpxDyaqP9dQp3gWXBY1ZpfkrRfNvbw/exec';
         const USER_SHEET_DIRECT_URL = '';
 
         window.addEventListener('error', function(event) {
-            // 無視する無害なエラー（ブラウザ拡張機能やResizeObserver起因など）
             if (event.message && (event.message.includes('ResizeObserver') || event.message.includes('Script error'))) return;
             console.error("Global Error Caught: ", event.error);
             const banner = document.getElementById('global-error-banner');
@@ -848,6 +846,21 @@
             const offset = d.getTimezoneOffset() * 60000;
             const localISOTime = (new Date(d.getTime() - offset)).toISOString().slice(0, 10);
             return localISOTime;
+        }
+        
+        // GAS側で日付が変換された場合でも、アプリ用の「YYYY-MM-DD」形式に補正する関数
+        function normalizeDateStr(dStr) {
+            if (!dStr) return '';
+            if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
+            if (dStr.includes('/')) {
+                const p = dStr.split('/');
+                if (p.length === 3) return `${p[0]}-${p[1].padStart(2,'0')}-${p[2].padStart(2,'0')}`;
+            }
+            try {
+                const d = new Date(dStr);
+                if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+            } catch(e) {}
+            return dStr;
         }
 
         const state = {
@@ -1116,11 +1129,13 @@
             updateDateDisplays();
             initGasScriptTemplate();
             
-            const savedGasUrl = safeStorage.getItem('ds_gas_url');
-            if (savedGasUrl) {
-                state.gasUrl = savedGasUrl;
+            // ★キャッシュを無視して強制的にURLを適用する
+            if (USER_GAS_URL && USER_GAS_URL.trim() !== '') {
+                state.gasUrl = USER_GAS_URL;
+                safeStorage.setItem('ds_gas_url', USER_GAS_URL); // ストレージも強制上書き
             } else {
-                state.gasUrl = USER_GAS_URL || '';
+                const savedGasUrl = safeStorage.getItem('ds_gas_url');
+                state.gasUrl = savedGasUrl || '';
             }
             
             const savedSheetUrl = safeStorage.getItem('ds_sheet_direct_url');
@@ -1382,7 +1397,7 @@
                     </div>
                     <div class="text-[10px] mt-2 text-slate-600">
                         <span class="mr-3 inline-block">ID: <strong class="font-mono text-slate-800 text-[11px]">${s.id}</strong></span>
-                        ${state.currentRole === 'superadmin' ? `<span class="mr-3 inline-block">PW: <strong class="font-mono text-slate-800 text-[11px]">${escapeHtml(s.password)}</strong></span>` : ''}
+                        ${state.currentRole === 'superadmin' ? `<span class="mr-2 inline-block">PW: <strong class="font-mono text-slate-800 text-[11px]">${escapeHtml(s.password)}</strong></span>` : ''}
                         <div class="mt-1.5">エリア: ${aHtml}</div>
                     </div>
                     ${state.currentRole!=='staff' ? `<div class="mt-2.5 pt-2.5 border-t border-slate-200 flex gap-3"><button onclick="openEditMemberModal('${s.id}')" class="text-xs font-semibold text-brand-600 hover:text-brand-800 transition-colors"><i class="fa-solid fa-pen mr-1"></i>編集</button><button onclick="deleteMember('${s.id}')" class="text-xs font-semibold text-rose-500 hover:text-rose-700 transition-colors"><i class="fa-solid fa-trash mr-1"></i>削除</button></div>` : ''}
@@ -1750,7 +1765,13 @@
             try {
                 const res = await callGasApi('fetchAll', {}, bg); 
                 if (res.data) {
-                    if (res.data.schedules) state.schedules = res.data.schedules;
+                    if (res.data.schedules) {
+                        state.schedules = res.data.schedules.map(s => {
+                            // ★GASからの日付をアプリで使える形式に自動補正
+                            s.date = normalizeDateStr(s.date);
+                            return s;
+                        });
+                    }
                     if (res.data.stores) state.stores = res.data.stores;
                     if (res.data.staffs) state.staffs = res.data.staffs;
                     if (res.data.areas) state.areas = res.data.areas;
