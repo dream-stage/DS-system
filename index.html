@@ -60,8 +60,8 @@
 
     <div id="login-view" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-sm p-4 overflow-y-auto">
         <div id="login-card" class="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden border border-slate-100 animate-fade-in flex flex-col justify-between my-auto">
-            <div class="bg-brand-600 p-6 md:p-8 text-white text-center relative overflow-hidden shrink-0">
-                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-brand-500/30 rounded-full blur-2xl"></div>
+            <div class="bg-rose-600 p-6 md:p-8 text-white text-center relative overflow-hidden shrink-0">
+                <div class="absolute -right-8 -bottom-8 w-32 h-32 bg-rose-500/30 rounded-full blur-2xl"></div>
                 <div class="inline-flex items-center justify-center w-14 h-14 md:w-16 h-16 bg-white/10 rounded-2xl mb-3 backdrop-blur-md border border-white/20">
                     <i class="fa-solid fa-building-circle-check text-2xl md:text-3xl text-white"></i>
                 </div>
@@ -78,18 +78,18 @@
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">ユーザーID</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-user"></i></span>
-                        <input type="text" id="login-id" name="ds_login_id_dummy" required autocomplete="off" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm transition-all" placeholder="ユーザーIDを入力">
+                        <input type="text" id="login-id" name="ds_login_id_dummy" required autocomplete="off" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent text-sm transition-all" placeholder="ユーザーIDを入力">
                     </div>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1">パスワード</label>
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-key"></i></span>
-                        <input type="password" id="login-pw" name="ds_login_pw_dummy" required autocomplete="new-password" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent text-sm transition-all" placeholder="パスワードを入力">
+                        <input type="password" id="login-pw" name="ds_login_pw_dummy" required autocomplete="new-password" class="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent text-sm transition-all" placeholder="パスワードを入力">
                     </div>
                 </div>
                 <div class="pt-2">
-                    <button type="submit" id="login-submit-btn" class="w-full py-3.5 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-bold rounded-xl shadow-lg shadow-brand-500/30 transition-all flex items-center justify-center gap-2 text-base cursor-pointer">
+                    <button type="submit" id="login-submit-btn" class="w-full py-3.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-xl shadow-lg shadow-rose-500/30 transition-all flex items-center justify-center gap-2 text-base cursor-pointer">
                         <span>ログイン</span><i class="fa-solid fa-arrow-right text-xs"></i>
                     </button>
                 </div>
@@ -108,7 +108,7 @@
             <div class="w-64 flex flex-col h-full">
                 <div class="p-4 md:p-5 flex items-center justify-between border-b border-slate-800">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white font-bold text-base shadow-md">
+                        <div class="w-9 h-9 rounded-xl bg-rose-600 flex items-center justify-center text-white font-bold text-base shadow-md">
                             <i class="fa-solid fa-building-circle-check"></i>
                         </div>
                         <div>
@@ -848,7 +848,6 @@
             return localISOTime;
         }
         
-        // GAS側で日付が変換された場合でも、アプリ用の「YYYY-MM-DD」形式に補正する関数
         function normalizeDateStr(dStr) {
             if (!dStr) return '';
             if (/^\d{4}-\d{2}-\d{2}$/.test(dStr)) return dStr;
@@ -920,13 +919,32 @@
             sel.innerHTML = opts;
         }
 
-        function handleLogin(e) {
+        async function handleLogin(e) {
             if (e) e.preventDefault();
             let id = normalizeInput(document.getElementById('login-id').value);
             if (id.length > 0 && id.length < 4) id = id.padStart(4, '0');
             const pw = normalizeInput(document.getElementById('login-pw').value);
+            
             let staff = state.staffs.find(s => (s.id.padStart(4,'0') === id && normalizeInput(s.password) === pw));
             
+            // ★ローカルにメンバーがいなくてGAS連携が設定されている場合、最新データを取得して再確認する（初めてアプリを開いた人向け対策）
+            if (!staff && state.gasUrl) {
+                const btn = document.getElementById('login-submit-btn');
+                const origHtml = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>データ確認中...</span>';
+                
+                try {
+                    await fetchFromGas(true);
+                    staff = state.staffs.find(s => (s.id.padStart(4,'0') === id && normalizeInput(s.password) === pw));
+                } catch(err) {
+                    console.error("Login fetch error", err);
+                }
+                
+                btn.disabled = false;
+                btn.innerHTML = origHtml;
+            }
+
             if (!staff) {
                 const defs = [{ id: '0001', name: 'システム管理者', furigana: 'システムカンリシャ', role: 'システム管理者', area: state.areas, phone: '', email: '', password: 'admin', receiveAlert: false }];
                 const f = defs.find(s => s.id === id && s.password === pw);
@@ -957,7 +975,6 @@
             document.getElementById('app-shell').classList.remove('hidden');
             
             updateGasDot();
-            if (state.gasUrl) { fetchFromGas(true); }
             
             renderAll();
             switchView('top');
@@ -1129,10 +1146,10 @@
             updateDateDisplays();
             initGasScriptTemplate();
             
-            // ★キャッシュを無視して強制的にURLを適用する
+            // キャッシュを無視して強制的にURLを適用する
             if (USER_GAS_URL && USER_GAS_URL.trim() !== '') {
                 state.gasUrl = USER_GAS_URL;
-                safeStorage.setItem('ds_gas_url', USER_GAS_URL); // ストレージも強制上書き
+                safeStorage.setItem('ds_gas_url', USER_GAS_URL);
             } else {
                 const savedGasUrl = safeStorage.getItem('ds_gas_url');
                 state.gasUrl = savedGasUrl || '';
@@ -1149,6 +1166,11 @@
 
             const g = document.getElementById('gas-url-input'); if(g && state.gasUrl) g.value = state.gasUrl;
             
+            // ★ アプリを開いた瞬間に、裏側でスプレッドシートのデータを読み込んでおく（初めてログインする人への対策）
+            if (state.gasUrl) {
+                fetchFromGas(true);
+            }
+
             setTimeout(() => {
                 document.getElementById('login-id').value = '';
                 document.getElementById('login-pw').value = '';
@@ -1767,7 +1789,6 @@
                 if (res.data) {
                     if (res.data.schedules) {
                         state.schedules = res.data.schedules.map(s => {
-                            // ★GASからの日付をアプリで使える形式に自動補正
                             s.date = normalizeDateStr(s.date);
                             return s;
                         });
