@@ -8,8 +8,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="DS system">
-    <meta name="theme-color" content="#0f172a">
+    <meta name="theme-color" content="#e11d48">
+    
+    <!-- スマホ用アイコン（iPhone/Android両対応） -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23e11d48'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' font-size='50' fill='white' font-family='sans-serif'>DS</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23e11d48'/><text x='50%' y='55%' dominant-baseline='central' text-anchor='middle' font-size='50' fill='white' font-family='sans-serif'>DS</text></svg>">
+    
     <title>DS system - 作業進捗管理システム</title>
     
     <!-- Tailwind CSS -->
@@ -927,7 +931,7 @@
             
             let staff = state.staffs.find(s => (s.id.padStart(4,'0') === id && normalizeInput(s.password) === pw));
             
-            // ★ローカルにメンバーがいなくてGAS連携が設定されている場合、最新データを取得して再確認する（初めてアプリを開いた人向け対策）
+            // ★ローカルにメンバーがいなくてGAS連携が設定されている場合、最新データを取得して再確認する
             if (!staff && state.gasUrl) {
                 const btn = document.getElementById('login-submit-btn');
                 const origHtml = btn.innerHTML;
@@ -1166,7 +1170,7 @@
 
             const g = document.getElementById('gas-url-input'); if(g && state.gasUrl) g.value = state.gasUrl;
             
-            // ★ アプリを開いた瞬間に、裏側でスプレッドシートのデータを読み込んでおく（初めてログインする人への対策）
+            // ★ アプリを開いた瞬間に、裏側でスプレッドシートのデータを読み込んでおく
             if (state.gasUrl) {
                 fetchFromGas(true);
             }
