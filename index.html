@@ -138,7 +138,7 @@
                         <i class="fa-solid fa-house w-5 text-center text-sky-400"></i><span>トップ画面</span>
                     </button>
                     <button onclick="switchView('progress')" id="nav-progress" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
-                        <i class="fa-solid fa-chart-line w-5 text-center text-brand-400"></i><span>作業進捗確認</span>
+                        <i class="fa-solid fa-chart-line w-5 text-center text-rose-400"></i><span>作業進捗確認</span>
                     </button>
                     <button onclick="switchView('schedule')" id="nav-schedule" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-slate-800 hover:text-white">
                         <i class="fa-solid fa-calendar-plus w-5 text-center text-rose-500"></i><span>訪店予定登録</span>
@@ -221,8 +221,8 @@
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
                             <button type="button" onclick="switchView('progress')" class="w-full p-5 bg-slate-50 hover:bg-slate-100 active:bg-slate-200 border-2 border-slate-200 rounded-2xl shadow-sm text-left transition-all group flex items-center justify-between">
-                                <div><span class="font-bold text-slate-800 text-lg block group-hover:text-brand-600 transition-colors">作業進捗確認</span></div>
-                                <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fa-solid fa-chart-line text-xl text-brand-600"></i></div>
+                                <div><span class="font-bold text-slate-800 text-lg block group-hover:text-rose-600 transition-colors">作業進捗確認</span></div>
+                                <div class="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-600 shadow-sm group-hover:scale-105 transition-transform"><i class="fa-solid fa-chart-line text-xl text-rose-600"></i></div>
                             </button>
                             <button type="button" onclick="switchView('schedule')" class="w-full p-5 bg-rose-500 hover:bg-rose-600 active:bg-rose-700 text-white rounded-2xl shadow-md text-left transition-all group flex items-center justify-between">
                                 <div><span class="font-bold text-lg block">訪店予定登録</span></div>
@@ -275,7 +275,7 @@
                     <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden space-y-4 p-4 md:p-6">
                         <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
                             <div class="flex items-center gap-2">
-                                <i class="fa-solid fa-list-check text-brand-600 text-lg"></i><h2 class="font-bold text-slate-800 text-base">作業進捗確認</h2>
+                                <i class="fa-solid fa-list-check text-rose-600 text-lg"></i><h2 class="font-bold text-slate-800 text-base">作業進捗確認</h2>
                             </div>
                             <div id="progress-date-nav" class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shrink-0 shadow-sm">
                                 <button type="button" onclick="navigateDate(-1)" class="tap-btn px-2 md:px-2.5 py-1 text-xs font-semibold text-slate-600 hover:bg-white active:bg-slate-200 rounded-lg transition-all flex items-center gap-1"><i class="fa-solid fa-chevron-left text-[10px]"></i><span class="hidden sm:inline">前日</span></button>
@@ -289,16 +289,16 @@
 
                         <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
                             <div class="flex flex-wrap items-center gap-2 flex-1">
-                                <select id="progress-filter-status" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <select id="progress-filter-status" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none">
                                     <option value="">ステータス</option><option value="未入店">未入店</option><option value="入店中">入店中</option><option value="退店済">退店済</option>
                                 </select>
-                                <select id="progress-filter-area" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <select id="progress-filter-area" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none">
                                     <option value="">エリア</option>
                                 </select>
-                                <select id="progress-filter-type" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <select id="progress-filter-type" onchange="renderProgressTable()" class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none">
                                     <option value="">種別</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option>
                                 </select>
-                                <input type="text" id="progress-search" oninput="renderProgressTable()" placeholder="店舗名・担当者検索..." class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none w-44">
+                                <input type="text" id="progress-search" oninput="renderProgressTable()" placeholder="店舗名・担当者検索..." class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none w-44">
                             </div>
                             <button onclick="exportToCSV()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition-colors flex items-center gap-1.5 shrink-0">
                                 <i class="fa-solid fa-file-csv"></i><span>CSV出力</span>
@@ -335,31 +335,31 @@
                 <form id="admin-schedule-form" autocomplete="on" onsubmit="handleScheduleSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">エリア選択 <span class="text-rose-500">*</span></label>
-                                <select id="sched-area" onchange="updateCompanyOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="">エリアを選択</option></select>
+                                <select id="sched-area" onchange="updateCompanyOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"><option value="">エリアを選択</option></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">企業名選択 <span class="text-rose-500">*</span></label>
-                                <select id="sched-company" onchange="updateStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"><option value="">まずエリアを選択してください</option></select>
+                                <select id="sched-company" onchange="updateStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"><option value="">まずエリアを選択してください</option></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">店舗名選択 <span class="text-rose-500">*</span></label>
-                                <select id="sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"><option value="">まず企業名を選択してください</option></select>
+                                <select id="sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-400"><option value="">まず企業名を選択してください</option></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label>
-                                <select id="sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled selected hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select>
+                                <select id="sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"><option value="" disabled selected hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">担当者</label>
-                                <select id="sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select>
+                                <select id="sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間</label>
-                                <input type="text" id="sched-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none">
+                                <input type="text" id="sched-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none font-mono">
                             </div>
                             <div class="md:col-span-3">
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label>
-                                <textarea id="sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                                <textarea id="sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></textarea>
                             </div>
                             <div class="md:col-span-3 pt-2">
                                 <button type="submit" id="sched-submit-btn" class="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"><i class="fa-solid fa-plus"></i><span>訪店予定を登録する</span></button>
@@ -381,11 +381,11 @@
                 <form id="checkin-form-container" autocomplete="on" onsubmit="handleCheckinSubmit(event)" class="space-y-4 max-w-xl">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">店舗名を選択 <span class="text-rose-500">*</span></label>
-                                <select id="checkin-schedule-id" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="">選択してください</option></select>
+                                <select id="checkin-schedule-id" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"><option value="">選択してください</option></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label>
-                                <textarea id="checkin-memo" rows="3" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                                <textarea id="checkin-memo" rows="3" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-sky-500 focus:outline-none"></textarea>
                             </div>
                             <p class="text-[11px] text-slate-500 font-bold leading-relaxed"><span class="text-rose-500">※入店時位置情報を取得します。</span><br>GeminiアプリやLINE等のアプリ内ブラウザではGPSがブロックされる場合があります。<br>その際は<span class="text-rose-500">SafariやChromeブラウザ</span>で開き直してください。<br><span class="mt-1 block">※SafariやChromeブラウザで開き直して「拒否されています」と出る場合は、<span class="text-rose-500">スマホ本体の「設定」からSafari/Chromeの位置情報を「許可」</span>に変更してください。</span></p>
                             <div class="pt-2">
@@ -401,11 +401,11 @@
                 <form id="checkout-form-container" autocomplete="on" onsubmit="handleCheckoutSubmit(event)" class="space-y-4 max-w-xl">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 mb-1">入店中の店舗名を選択 <span class="text-rose-500">*</span></label>
-                                <select id="checkout-schedule-id" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="">選択してください</option></select>
+                                <select id="checkout-schedule-id" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"><option value="">選択してください</option></select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label>
-                                <textarea id="checkout-memo" rows="4" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea>
+                                <textarea id="checkout-memo" rows="4" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
                             </div>
                             <button type="submit" id="checkout-submit-btn" class="w-full py-3 bg-amber-500 hover:bg-amber-600 text-slate-900 font-semibold rounded-xl shadow-md transition-colors flex items-center justify-center gap-2"><i class="fa-solid fa-paper-plane"></i><span>退店を報告する</span></button>
                         </form>
@@ -600,7 +600,7 @@
 
                     <div class="p-4 bg-white border border-slate-200 rounded-xl space-y-2">
                         <div class="flex items-center justify-between"><span class="font-bold text-slate-800 text-sm flex items-center gap-1.5">⑥ 遅延アラートの有効化 (任意)</span></div>
-                        <p class="text-slate-600">予定から10分超過、または時間が未登録の場合に担当者へ自動でアラートメールを送信します。<br>有効にするには、連携設定完了後に下のボタンを押してください。</p>
+                        <p class="text-slate-600">予定から10分超過、または明日の予定が未登録の場合に担当者へ自動でアラートメールを送信します。<br>有効にするには、連携設定完了後に下のボタンを押してください。</p>
                         <button type="button" onclick="setupGasAlertTrigger()" class="w-full mt-2 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm"><i class="fa-solid fa-bell"></i> アラートメールを自動送信する設定をONにする</button>
                     </div>
                 </div>
@@ -626,7 +626,7 @@
                     </div>
                     
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-slate-100">
-                        <button id="btn-sync-send" onclick="syncAllToGas()" class="py-3 px-4 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-cloud-arrow-up text-base"></i><span>現行データを送信</span></button>
+                        <button id="btn-sync-send" onclick="syncAllToGas()" class="py-3 px-4 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-cloud-arrow-up text-base"></i><span>現行データを送信</span></button>
                         <button id="btn-sync-fetch" onclick="fetchFromGas()" class="py-3 px-4 bg-slate-700 hover:bg-slate-800 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-cloud-arrow-down text-base"></i><span>最新データを取得</span></button>
                         <button id="btn-sync-test" onclick="testGasConnection()" class="py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"><i class="fa-solid fa-satellite-dish text-base"></i><span>接続テスト</span></button>
                     </div>
@@ -738,7 +738,7 @@
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[90dvh]">
             <div class="bg-slate-900 text-white p-5 flex items-center justify-between shrink-0">
                 <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-circle-info"></i></div>
+                    <div class="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-circle-info"></i></div>
                     <div><h3 class="font-bold text-base text-white">訪問・作業詳細</h3><p id="modal-date-badge" class="text-[11px] text-slate-400">日付: -</p></div>
                 </div>
                 <button type="button" onclick="closeDetailModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors" title="閉じる"><i class="fa-solid fa-xmark text-lg"></i></button>
@@ -751,7 +751,7 @@
                 <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"><span class="text-[10px] text-slate-400 font-medium block">種別</span><span id="modal-task-type" class="font-semibold text-slate-700 text-sm mt-0.5 block">-</span></div>
                 <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200/80"><span class="text-[10px] text-slate-400 font-medium block">担当者</span><span id="modal-staff" class="font-semibold text-slate-700 text-sm mt-0.5 block">-</span></div>
                 <div class="border border-slate-200 rounded-xl p-4 bg-white space-y-3">
-                    <h4 class="font-bold text-slate-800 text-xs border-b border-slate-100 pb-2 flex items-center gap-1.5"><i class="fa-regular fa-clock text-brand-600"></i><span>タイムライン</span></h4>
+                    <h4 class="font-bold text-slate-800 text-xs border-b border-slate-100 pb-2 flex items-center gap-1.5"><i class="fa-regular fa-clock text-rose-600"></i><span>タイムライン</span></h4>
                     <div class="grid grid-cols-3 gap-2 text-center">
                         <div class="p-2 rounded-lg bg-slate-50"><span class="text-[10px] text-slate-400 block">入店予定時間</span><span id="modal-target-time" class="font-bold text-slate-800 text-xs">-</span></div>
                         <div class="p-2 rounded-lg bg-emerald-50"><span class="text-[10px] text-emerald-600 block">入店時間</span><span id="modal-checkin-time" class="font-bold text-emerald-700 text-xs">-</span></div>
@@ -772,7 +772,7 @@
                 </div>
             </div>
             <div class="bg-slate-50 p-4 border-t border-slate-100 flex items-center justify-end gap-2.5">
-                <button type="button" onclick="openEditScheduleModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-pen-to-square"></i><span>編集</span></button>
+                <button type="button" onclick="openEditScheduleModal()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-semibold text-xs rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-pen-to-square"></i><span>編集</span></button>
                 <button type="button" id="detail-modal-delete-btn" onclick="deleteCurrentDetailSchedule()" class="superadmin-only px-3.5 py-2 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-600 border border-rose-200 font-semibold text-xs rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer" title="削除"><i class="fa-solid fa-trash-can"></i><span>削除</span></button>
             </div>
         </div>
@@ -782,28 +782,28 @@
     <div id="edit-schedule-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 hidden animate-fade-in overflow-y-auto">
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden border border-slate-100 my-auto flex flex-col max-h-[90dvh]">
             <div class="bg-slate-900 text-white p-4 md:p-5 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-brand-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-pen-to-square"></i></div><h3 class="font-bold text-base text-white">予定・進捗情報の編集</h3></div>
+                <div class="flex items-center gap-2.5"><div class="w-8 h-8 rounded-lg bg-rose-600 flex items-center justify-center text-white text-sm font-bold"><i class="fa-solid fa-pen-to-square"></i></div><h3 class="font-bold text-base text-white">予定・進捗情報の編集</h3></div>
                 <button type="button" onclick="closeEditScheduleModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <form id="edit-schedule-form" autocomplete="on" onsubmit="handleUpdateSchedule(event)" class="p-5 md:p-6 text-xs overflow-y-auto flex-1">
                 <input type="hidden" id="edit-sched-id">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div class="sm:col-span-1"><label class="block text-xs font-semibold text-slate-600 mb-1">訪店日付 <span class="text-rose-500">*</span></label><input type="date" id="edit-sched-date" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></div>
-                    <div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-600 mb-1">ステータス <span class="text-rose-500">*</span></label><select id="edit-sched-status" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-bold text-slate-700"><option value="未入店">未入店</option><option value="入店中">入店中</option><option value="退店済">退店済</option></select></div>
-                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">エリア選択 <span class="text-rose-500">*</span></label><select id="edit-sched-area" onchange="updateEditCompanyOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
-                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">企業名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-company" onchange="updateEditStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
-                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">店舗名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
-                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label><select id="edit-sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"><option value="" disabled hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select></div>
-                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">担当者</label><select id="edit-sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></select></div>
+                    <div class="sm:col-span-1"><label class="block text-xs font-semibold text-slate-600 mb-1">訪店日付 <span class="text-rose-500">*</span></label><input type="date" id="edit-sched-date" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></div>
+                    <div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-600 mb-1">ステータス <span class="text-rose-500">*</span></label><select id="edit-sched-status" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none font-bold text-slate-700"><option value="未入店">未入店</option><option value="入店中">入店中</option><option value="退店済">退店済</option></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">エリア選択 <span class="text-rose-500">*</span></label><select id="edit-sched-area" onchange="updateEditCompanyOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">企業名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-company" onchange="updateEditStoreOptions()" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">店舗名選択 <span class="text-rose-500">*</span></label><select id="edit-sched-store" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">種別 <span class="text-rose-500">*</span></label><select id="edit-sched-task-type" required class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"><option value="" disabled hidden>種別を選択</option><option value="ディレクター">ディレクター</option><option value="アテンド">アテンド</option><option value="取材">取材</option><option value="販売会">販売会</option><option value="その他">その他</option></select></div>
+                    <div><label class="block text-xs font-semibold text-slate-600 mb-1">担当者</label><select id="edit-sched-staff" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></select></div>
                     <div id="edit-sched-target-time-container">
                         <label class="block text-xs font-semibold text-slate-600 mb-1">入店予定時間</label>
-                        <input type="text" id="edit-sched-target-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none font-mono">
+                        <input type="text" id="edit-sched-target-time" placeholder="時間を選択してください" onfocus="(this.type='time')" onblur="(this.value == '' ? this.type='text' : this.type='time')" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none font-mono">
                     </div>
-                    <div class="sm:col-span-3"><label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label><textarea id="edit-sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-brand-500 focus:outline-none"></textarea></div>
+                    <div class="sm:col-span-3"><label class="block text-xs font-semibold text-slate-600 mb-1">連絡事項</label><textarea id="edit-sched-memo" rows="2" placeholder="連絡事項があれば入力" class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-rose-500 focus:outline-none"></textarea></div>
                 </div>
                 <div class="flex justify-end gap-2 pt-4 mt-4 border-t border-slate-100">
                     <button type="button" onclick="closeEditScheduleModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold rounded-xl transition-colors">キャンセル</button>
-                    <button type="submit" id="edit-sched-submit-btn" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-check"></i><span>変更を保存</span></button>
+                    <button type="submit" id="edit-sched-submit-btn" class="px-5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-semibold rounded-xl shadow-sm transition-colors flex items-center gap-1.5 cursor-pointer"><i class="fa-solid fa-check"></i><span>変更を保存</span></button>
                 </div>
             </form>
         </div>
@@ -956,6 +956,9 @@
 
         async function handleLogin(e) {
             if (e) e.preventDefault();
+            const btn = document.getElementById('login-submit-btn');
+            if (btn.disabled) return;
+
             let id = normalizeInput(document.getElementById('login-id').value);
             if (id.length > 0 && id.length < 4) id = id.padStart(4, '0');
             const pw = normalizeInput(document.getElementById('login-pw').value);
@@ -963,7 +966,6 @@
             let staff = state.staffs.find(s => (s.id.padStart(4,'0') === id && normalizeInput(s.password) === pw));
             
             if (!staff && state.gasUrl) {
-                const btn = document.getElementById('login-submit-btn');
                 const origHtml = btn.innerHTML;
                 btn.disabled = true;
                 btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>データ確認中...</span>';
@@ -1114,7 +1116,7 @@
             let [tot, unv, ins, cmp, del] = [list.length, 0, 0, 0, 0];
             const currM = new Date().getHours() * 60 + new Date().getMinutes();
             list.forEach(s => {
-                if (s.status === '未入店') { unv++; if (s.targetTime) { const p=s.targetTime.split(':'); if (currM > (p[0]*60+Number(p[1])+10)) del++; } }
+                if (s.status === '未入店') { unv++; if (s.targetTime) { const p=s.targetTime.split(':'); if (currM >= (p[0]*60+Number(p[1])+10)) del++; } }
                 else if (s.status === '入店中') ins++;
                 else if (s.status === '退店済') cmp++;
             });
@@ -1756,7 +1758,7 @@
             document.getElementById('edit-sched-staff').value = s.staff || '未定';
             
             const ttInput = document.getElementById('edit-sched-target-time');
-            if (s.targetTime) {
+            if (s.targetTime && s.targetTime !== '--:--' && s.targetTime !== '未定') {
                 ttInput.type = 'time';
                 ttInput.value = formatTimeStr(s.targetTime);
             } else {
@@ -1808,7 +1810,7 @@
 
         function renderMemberSchedules() {
             const cnt = document.getElementById('member-schedule-list'); if(!cnt || state.currentRole === 'superadmin') return;
-            const ts = state.schedules.filter(s => s.date === state.selectedDate && s.staff === state.currentUser && s.status === '未入店' && !s.targetTime);
+            const ts = state.schedules.filter(s => s.date === state.selectedDate && s.staff === state.currentUser && s.status === '未入店' && (!s.targetTime || s.targetTime === '未定' || s.targetTime === '--:--'));
             if (ts.length === 0) { cnt.innerHTML = '<div class="text-xs text-slate-400 p-4 border rounded bg-white">未登録の予定はありません</div>'; return; }
             cnt.innerHTML = ts.map(s => `
                 <div class="border rounded-xl p-4 bg-white shadow-sm">
@@ -2009,7 +2011,7 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ status: 'success', data: data })).setMimeType(ContentService.MimeType.JSON);
     }
     
-    // 【新規追加】登録メール送信処理
+    // 登録メール送信処理
     if (action === 'sendWelcomeEmail') {
       const subject = '【DS system】登録完了のお知らせ';
       const body = 'お疲れ様です。\\n' +
@@ -2053,6 +2055,20 @@ function getOrCreateSheet(sheetName) {
 
 function saveDataToSheets(data) {
   if (data.schedules) {
+    // 【新規追加】スプレッドシート保存時に日付順・時間順で自動並べ替えを行う
+    data.schedules.sort(function(a, b) {
+      var dateA = a.date || '9999-99-99';
+      var dateB = b.date || '9999-99-99';
+      if (dateA < dateB) return -1;
+      if (dateA > dateB) return 1;
+      
+      var tA = (!a.targetTime || a.targetTime === '未定' || a.targetTime === '--:--') ? '' : a.targetTime;
+      var tB = (!b.targetTime || b.targetTime === '未定' || b.targetTime === '--:--') ? '' : b.targetTime;
+      if (tA < tB) return -1;
+      if (tA > tB) return 1;
+      return 0;
+    });
+
     const sheet = getOrCreateSheet('訪店予定_進捗');
     sheet.clear();
     const rows = [['ID', '日付', 'ステータス', 'エリア', '企業名', '店舗名', '種別', '担当者', '入店予定時間', '入店時間', '退店時間', '緯度', '経度', 'マップ確認', '連絡事項']];
@@ -2094,9 +2110,19 @@ function loadDataFromSheets() {
       if (data[i].length > 14) memoVal = String(data[i][14]);
       else if (data[i].length > 13 && String(data[i][13]).indexOf('HYPERLINK') === -1 && String(data[i][13]).indexOf('📍') === -1) memoVal = String(data[i][13]);
 
+      let rawDate = data[i][1];
+      let dateStr = rawDate instanceof Date ? Utilities.formatDate(rawDate, "JST", "yyyy-MM-dd") : String(rawDate);
+
+      let rawTarget = data[i][8];
+      let targetStr = rawTarget instanceof Date ? Utilities.formatDate(rawTarget, "JST", "HH:mm") : String(rawTarget);
+      let rawCheckin = data[i][9];
+      let checkinStr = rawCheckin instanceof Date ? Utilities.formatDate(rawCheckin, "JST", "HH:mm") : String(rawCheckin);
+      let rawCheckout = data[i][10];
+      let checkoutStr = rawCheckout instanceof Date ? Utilities.formatDate(rawCheckout, "JST", "HH:mm") : String(rawCheckout);
+
       result.schedules.push({
-        id: String(data[i][0]), date: String(data[i][1]), status: String(data[i][2]), area: String(data[i][3]), company: String(data[i][4]), store: String(data[i][5]),
-        taskType: String(data[i][6]), staff: String(data[i][7]), targetTime: String(data[i][8]), checkinTime: String(data[i][9]), checkoutTime: String(data[i][10]),
+        id: String(data[i][0]), date: dateStr, status: String(data[i][2]), area: String(data[i][3]), company: String(data[i][4]), store: String(data[i][5]),
+        taskType: String(data[i][6]), staff: String(data[i][7]), targetTime: targetStr, checkinTime: checkinStr, checkoutTime: checkoutStr,
         lat: data[i][11], lng: data[i][12], memo: memoVal
       });
     }
@@ -2106,9 +2132,12 @@ function loadDataFromSheets() {
   if (staffSheet) {
     const data = staffSheet.getDataRange().getValues();
     for (let i = 1; i < data.length; i++) {
+      let alertVal = data[i][8];
+      let receiveAlert = (alertVal === true || String(alertVal).toUpperCase() === 'TRUE');
+      
       result.staffs.push({
         id: String(data[i][0]).padStart(4, '0'), name: String(data[i][1]), furigana: String(data[i][2]), role: String(data[i][3]), password: String(data[i][4]),
-        phone: String(data[i][5]), email: String(data[i][6]), area: String(data[i][7]).split(',').filter(Boolean), receiveAlert: data[i][8] === true || data[i][8] === 'true'
+        phone: String(data[i][5]), email: String(data[i][6]), area: String(data[i][7]).split(',').filter(Boolean), receiveAlert: receiveAlert
       });
     }
   }
@@ -2154,14 +2183,21 @@ function checkDelayAndSendAlerts() {
   const tomorrow = new Date(jstNow.getTime() + (24 * 60 * 60 * 1000));
   const tomorrowStr = tomorrow.getUTCFullYear() + '-' + String(tomorrow.getUTCMonth() + 1).padStart(2, '0') + '-' + String(tomorrow.getUTCDate()).padStart(2, '0');
 
+  Logger.log("=== アラート送信チェック開始 ===");
+  Logger.log("現在時刻(JST): " + jstNow.toString());
+  Logger.log("判定基準日: " + todayStr + ", 基準分(0時からの分数): " + currentMinutes);
+
   const alertRecipients = data.staffs.filter(s => s.receiveAlert).map(s => s.email).filter(Boolean);
-  if (alertRecipients.length === 0) return;
+  Logger.log("送信対象メールアドレス数: " + alertRecipients.length);
+  if (alertRecipients.length === 0) {
+      Logger.log("【終了】アラート受信設定がONのメンバーがいません。");
+      return;
+  }
   
   const storeProps = PropertiesService.getScriptProperties();
   let sentAlerts = {};
   try { sentAlerts = JSON.parse(storeProps.getProperty('sentAlerts') || '{}'); } catch(e){}
   
-  // アラートの過剰送信を防ぐため、今日と明日の通知履歴だけを保持
   let newSentAlerts = {};
   Object.keys(sentAlerts).forEach(k => {
     if (k.endsWith(todayStr) || k.endsWith(tomorrowStr)) {
@@ -2176,27 +2212,33 @@ function checkDelayAndSendAlerts() {
   data.schedules.forEach(s => {
     if (s.status !== '未入店') return;
 
-    // ① 遅延アラート（当日の予定で、時間が設定されており、10分超過）
-    if (s.date === todayStr && s.targetTime && s.targetTime !== '未定') {
+    if (s.date === todayStr && s.targetTime && s.targetTime !== '未定' && s.targetTime !== '--:--') {
       const parts = s.targetTime.split(':');
       if (parts.length === 2) {
         const targetMinutes = parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+        Logger.log("確認中予定: " + s.store + " 予定時刻: " + s.targetTime + " (分換算: " + targetMinutes + ")");
+        
         if (currentMinutes >= targetMinutes + 10) {
           const key = 'delay_' + s.id + '_' + s.date;
           if (!sentAlerts[key]) {
+            Logger.log("【遅延検知】: " + s.store + " - 10分以上経過しています");
             delayedSchedules.push(s);
             sentAlerts[key] = true;
+          } else {
+            Logger.log("【スキップ】: " + s.store + " - 既に送信済みです");
           }
+        } else {
+          Logger.log("【スキップ】: " + s.store + " - まだ10分経過していません。経過: " + (currentMinutes - targetMinutes) + "分");
         }
       }
     }
     
-    // ② 未登録アラート（時間が空欄の場合）
-    if (!s.targetTime || s.targetTime === '未定') {
-      // 明日の予定で19:00を過ぎている場合のみ
+    // 【修正箇所】未登録アラートは「明日の予定」に対してのみ判定する（当日は判定しない）
+    if (!s.targetTime || s.targetTime === '未定' || s.targetTime === '--:--') {
       if (s.date === tomorrowStr && currentMinutes >= 19 * 60) {
         const key = 'unreg_' + s.id + '_' + s.date;
         if (!sentAlerts[key]) {
+          Logger.log("【未登録検知】: " + s.store + " - 19時を過ぎています");
           unregisteredSchedules.push(s);
           sentAlerts[key] = true;
         }
@@ -2205,6 +2247,7 @@ function checkDelayAndSendAlerts() {
   });
   
   if (delayedSchedules.length > 0 || unregisteredSchedules.length > 0) {
+    Logger.log("メール送信を実行します");
     storeProps.setProperty('sentAlerts', JSON.stringify(sentAlerts));
     
     let subject = '【DS system】';
@@ -2245,7 +2288,7 @@ function checkDelayAndSendAlerts() {
       body: body
     });
   } else {
-    // 送信するメールがなくても履歴クリーンアップのために保存
+    Logger.log("【終了】送信条件に一致する予定（または未送信の予定）はありませんでした。");
     storeProps.setProperty('sentAlerts', JSON.stringify(sentAlerts));
   }
 }
